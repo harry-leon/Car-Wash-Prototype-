@@ -18,16 +18,17 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 import { Transaction, fmtMoney, useWashStore } from "@/lib/wash-store";
 import { PageHeader, TierBadge } from "@/components/shared";
 
 export const Route = createFileRoute("/transactions")({
-  component: HistoryPage,
+  component: () => <RouteRedirect to="/customer/transactions" />,
 });
 
-function HistoryPage() {
+export function HistoryPage() {
   const { role } = useCarwashStore();
   const { transactions } = useWashStore();
   const [search, setSearch] = React.useState("");

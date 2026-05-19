@@ -21,9 +21,10 @@ import { cn } from "@/lib/utils";
 import { fmtMoney, useWashStore } from "@/lib/wash-store";
 import { toast } from "sonner";
 import { PageHeader, TierBadge } from "@/components/shared";
+import { RouteRedirect } from "@/components/route-redirect";
 
 export const Route = createFileRoute("/checkout")({
-  component: CheckoutPage,
+  component: () => <RouteRedirect to="/staff/checkout" />,
 });
 
 const PAYMENT_METHODS = [
@@ -32,7 +33,7 @@ const PAYMENT_METHODS = [
   { id: "qr", label: "Bank Transfer QR", icon: QrCode },
 ];
 
-function CheckoutPage() {
+export function CheckoutPage() {
   const { role } = useCarwashStore();
   const { draft, promotions, completeCheckout, setDraft } = useWashStore();
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ function CheckoutPage() {
       <div className="mx-auto max-w-xl p-10 text-center">
         <PageHeader title="No active session" subtitle="Start a wash session first." />
         <Button asChild className="mt-6">
-          <Link to="/wash-session">
+          <Link to="/staff/wash-session">
             <ArrowLeft className="h-4 w-4" /> Start a new wash
           </Link>
         </Button>
@@ -128,7 +129,7 @@ function CheckoutPage() {
     }
     toast.success(`Payment processed for ${tx.id}`);
     setDraft(null);
-    navigate({ to: "/confirmation" });
+    navigate({ to: "/staff/confirmation" });
   };
 
   return (
@@ -323,7 +324,7 @@ function CheckoutPage() {
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button asChild variant="ghost" className="mt-2 w-full">
-              <Link to="/wash-session">
+              <Link to="/staff/wash-session">
                 <ArrowLeft className="h-4 w-4" /> Back
               </Link>
             </Button>

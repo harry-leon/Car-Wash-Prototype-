@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { LiveTracker } from "@/components/live-tracker";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/bookings/tracker")({
-  component: BookingTrackerPage,
+  component: () => <RouteRedirect to="/customer/bookings/tracker" />,
 });
 
-function BookingTrackerPage() {
+export function BookingTrackerPage() {
   const { role } = useCarwashStore();
 
   if (!canAccess(role, ["Customer", "Admin"])) {

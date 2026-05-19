@@ -60,7 +60,7 @@ export function StaffDashboard() {
       toast.success(`Walk-in ${id} checked in!`);
       setPlate("");
       setServiceIds(servicesCatalog[0] ? [servicesCatalog[0].id] : []);
-      navigate({ to: "/wash-session" });
+      navigate({ to: "/staff/wash-session" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to create walk-in booking.");
     } finally {
@@ -135,7 +135,7 @@ export function StaffDashboard() {
                           setProcessingBookingId(booking.id);
                           prepareSessionForBooking(booking.id);
                           toast.success(`${booking.id} checked in`);
-                          navigate({ to: "/wash-session" });
+                          navigate({ to: "/staff/wash-session" });
                         } catch (error) {
                           toast.error(error instanceof Error ? error.message : "Unable to check in booking.");
                         } finally {

@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nextTierInfo, usePortal } from "@/lib/portal-store";
+import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
-  component: ProfilePage,
+  component: () => <RouteRedirect to="/customer/profile" />,
 });
 
 const TIER_GRADIENT: Record<string, string> = {
@@ -19,7 +20,7 @@ const TIER_GRADIENT: Record<string, string> = {
   Platinum: "from-indigo-500 via-violet-500 to-fuchsia-400",
 };
 
-function ProfilePage() {
+export function ProfilePage() {
   const { profile, updateProfile } = usePortal();
   const [name, setName] = React.useState(profile?.name ?? "");
   const [phone, setPhone] = React.useState(profile?.phone ?? "");

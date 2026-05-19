@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   Bell,
@@ -12,15 +12,28 @@ import {
   UserPlus,
   Wrench,
 } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getHomePath } from "@/lib/auth";
 import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/")({
-  component: OverviewPage,
+  component: HomeRedirectPage,
 });
 
-function OverviewPage() {
+function HomeRedirectPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated, role } = useCarwashStore();
+
+  useEffect(() => {
+    navigate({ to: isAuthenticated ? getHomePath(role) : "/login", replace: true });
+  }, [isAuthenticated, navigate, role]);
+
+  return <div className="min-h-screen bg-background" />;
+}
+
+export function OverviewPage() {
   const { customers, bookings, transactions, notifications, role } = useCarwashStore();
   const activeCustomer = customers[0];
 
@@ -66,7 +79,7 @@ function OverviewPage() {
                 text="Create account, verify OTP and seed first vehicle."
               />
               <FlowLink
-                to="/bookings/new"
+                to="/customer/bookings/new"
                 icon={ClipboardList}
                 title="2. Book wash"
                 text="Create a booking using current customer vehicles."
@@ -78,25 +91,25 @@ function OverviewPage() {
                 text="Check in booked customers or handle walk-ins."
               />
               <FlowLink
-                to="/wash-session"
+                to="/staff/wash-session"
                 icon={CarFront}
                 title="4. Wash session"
                 text="Prepare services before checkout."
               />
               <FlowLink
-                to="/checkout"
+                to="/staff/checkout"
                 icon={ReceiptText}
                 title="5. Checkout"
                 text="Apply tier discount, promotion and point redemption."
               />
               <FlowLink
-                to="/loyalty"
+                to="/customer/loyalty"
                 icon={Gift}
                 title="6. Loyalty"
                 text="View points, tier progress and reward redemption."
               />
               <FlowLink
-                to="/notifications"
+                to="/staff/notifications"
                 icon={Bell}
                 title="7. Notifications"
                 text="Review booking and loyalty notifications."
@@ -128,7 +141,7 @@ function OverviewPage() {
                 <div className="font-medium">{role}</div>
               </div>
               <Button asChild className="mt-3 w-full">
-                <Link to="/bookings/new">
+                <Link to="/customer/bookings/new">
                   Continue Main Flow
                   <ArrowRight className="h-4 w-4" />
                 </Link>

@@ -1,12 +1,14 @@
 import * as React from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Car, CarFront, Truck, Bike, Phone, User, ArrowRight, Sparkles } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Bike, Car, CarFront, Phone, Sparkles, Truck, User, Hash, Tag } from "lucide-react";
 import { toast } from "sonner";
+import { GuestLayout } from "@/components/guest-layout";
+import { GuestOnly } from "@/components/route-guards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { usePortal, VEHICLE_TYPES, VehicleType } from "@/lib/portal-store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/register")({
   component: RegisterPage,
@@ -19,10 +21,9 @@ const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }
   Motorbike: Bike,
 };
 
-function RegisterPage() {
+export function RegisterPage() {
   const { setPending, pending } = usePortal();
   const navigate = useNavigate();
-
   const [name, setName] = React.useState(pending?.name ?? "");
   const [countryCode, setCountryCode] = React.useState(pending?.countryCode ?? "+84");
   const [phone, setPhone] = React.useState(pending?.phone ?? "");
@@ -31,15 +32,15 @@ function RegisterPage() {
   const [type, setType] = React.useState<VehicleType>(pending?.vehicle.type ?? "Sedan");
   const [submitting, setSubmitting] = React.useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!name.trim()) return toast.error("Please enter your full name.");
-    if (!/^0\d{9}$/.test(phone.trim())) return toast.error("Phone must follow Vietnamese format.");
+    if (!/^0\d{9}$/.test(phone.trim())) return toast.error("Phone must follow Vietnamese format (e.g. 0901234567).");
     if (!brandModel.trim()) return toast.error("Please enter your vehicle brand & model.");
     if (plate.trim().length < 4) return toast.error("License plate looks too short.");
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((resolve) => setTimeout(resolve, 800));
     setPending({
       name: name.trim(),
       phone: phone.trim(),
@@ -52,117 +53,148 @@ function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8 md:p-10">
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-6 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5" /> Step 1 of 2 · Create account
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Welcome to Carwash</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Register with one phone number and at least one vehicle to enter the main flow.
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
-        >
-          <div className="space-y-5 p-6">
-            <div>
-              <Label htmlFor="name" className="mb-1.5 block">
-                Full name
-              </Label>
-              <div className="relative">
-                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Tran Minh Anh"
-                  className="pl-9"
-                />
+    <GuestOnly>
+      <GuestLayout
+        title="Create an account"
+        description="Join AutoWash Pro to manage your vehicles, bookings, and earn loyalty rewards."
+        footer={
+          <div className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link to="/login" className="font-semibold text-primary hover:text-primary/80 transition-colors">
+              Sign in instead
+            </Link>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            {/* Personal Info Section */}
+            <div className="rounded-2xl border border-border/50 bg-background/30 p-5 backdrop-blur-sm space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Personal Details</h3>
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="phone" className="mb-1.5 block">
-                Phone number
-              </Label>
-              <div className="flex gap-2">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="+84">+84</option>
-                </select>
-                <div className="relative flex-1">
-                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+                <div className="relative group">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                    <User className="h-4 w-4" />
+                  </div>
                   <Input
-                    id="phone"
-                    inputMode="numeric"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="0901234567"
-                    className="pl-9"
+                    id="name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Nguyen Van A"
+                    className="pl-10 h-11 bg-background/50 border-border/60 focus:bg-background transition-all"
                   />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <select
+                      value={countryCode}
+                      onChange={(event) => setCountryCode(event.target.value)}
+                      className="h-11 w-20 appearance-none rounded-md border border-border/60 bg-background/50 px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-all font-medium"
+                    >
+                      <option value="+84">+84</option>
+                    </select>
+                  </div>
+                  <div className="relative flex-1 group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="phone"
+                      inputMode="numeric"
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))}
+                      placeholder="0901234567"
+                      className="pl-10 h-11 bg-background/50 border-border/60 focus:bg-background transition-all tracking-wide"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-dashed border-border bg-accent/30 p-4">
-              <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground">
-                Primary vehicle
+            {/* Vehicle Info Section */}
+            <div className="rounded-2xl border border-border/50 bg-background/30 p-5 backdrop-blur-sm space-y-4 relative overflow-hidden">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10" />
+              
+              <div className="flex items-center gap-2 mb-2">
+                <Car className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Primary Vehicle</h3>
               </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="brand" className="mb-1.5 block">
-                    Brand & model
-                  </Label>
-                  <Input
-                    id="brand"
-                    value={brandModel}
-                    onChange={(e) => setBrandModel(e.target.value)}
-                    placeholder="Toyota Vios"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="brand" className="text-sm font-medium">Brand & Model</Label>
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                      <Tag className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="brand"
+                      value={brandModel}
+                      onChange={(event) => setBrandModel(event.target.value)}
+                      placeholder="Toyota Vios"
+                      className="pl-10 h-11 bg-background/50 border-border/60 focus:bg-background transition-all"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="plate" className="mb-1.5 block">
-                    License plate
-                  </Label>
-                  <Input
-                    id="plate"
-                    value={plate}
-                    onChange={(e) => setPlate(e.target.value)}
-                    placeholder="51G-123.45"
-                    className="font-mono uppercase tracking-wider"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="plate" className="text-sm font-medium">License Plate</Label>
+                  <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                      <Hash className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="plate"
+                      value={plate}
+                      onChange={(event) => setPlate(event.target.value)}
+                      placeholder="51G-123.45"
+                      className="pl-10 h-11 font-mono uppercase tracking-wider bg-background/50 border-border/60 focus:bg-background transition-all"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="mt-4">
-                <Label className="mb-2 block">Vehicle type</Label>
+              
+              <div className="pt-2">
+                <Label className="text-sm font-medium block mb-3">Vehicle Type</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {VEHICLE_TYPES.map((t) => {
-                    const Icon = TYPE_ICONS[t];
-                    const active = type === t;
+                  {VEHICLE_TYPES.map((item) => {
+                    const Icon = TYPE_ICONS[item];
+                    const active = type === item;
                     return (
                       <button
-                        key={t}
+                        key={item}
                         type="button"
-                        onClick={() => setType(t)}
+                        onClick={() => setType(item)}
                         className={cn(
-                          "flex flex-col items-center gap-1 rounded-lg border p-3 transition-all",
+                          "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 transition-all duration-200 overflow-hidden",
                           active
-                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                            : "border-border hover:border-primary/40 hover:bg-accent/40",
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-background"
                         )}
                       >
+                        {active && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+                        )}
                         <Icon
                           className={cn(
-                            "h-5 w-5",
-                            active ? "text-primary" : "text-muted-foreground",
+                            "h-5 w-5 transition-colors relative z-10",
+                            active ? "text-primary" : "text-muted-foreground"
                           )}
                         />
-                        <span className="text-xs font-medium">{t}</span>
+                        <span className={cn(
+                          "text-[10px] sm:text-xs font-semibold relative z-10",
+                          active ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {item}
+                        </span>
                       </button>
                     );
                   })}
@@ -171,14 +203,25 @@ function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex justify-end border-t border-border bg-accent/20 p-5">
-            <Button type="submit" size="lg" disabled={submitting}>
-              {submitting ? "Sending..." : "Send Verification Code"}
-              {!submitting && <ArrowRight className="h-4 w-4" />}
-            </Button>
-          </div>
+          <Button 
+            type="submit" 
+            size="lg" 
+            className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5" 
+            disabled={submitting}
+          >
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Preparing...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                Continue to Verification <ArrowRight className="h-4 w-4" />
+              </span>
+            )}
+          </Button>
         </form>
-      </div>
-    </div>
+      </GuestLayout>
+    </GuestOnly>
   );
 }

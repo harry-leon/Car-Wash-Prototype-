@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AccessDenied } from "@/components/access-denied";
-import { DashboardLayout } from "@/components/dashboard-layout";
 import { canAccess } from "@/lib/access-control";
 import { useAppStore } from "@/lib/app-store";
 import { Card } from "@/components/ui/card";
@@ -23,11 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/analytics")({
-  component: () => (
-    <DashboardLayout>
-      <AnalyticsPage />
-    </DashboardLayout>
-  ),
+  component: AnalyticsPage,
 });
 
 const tiers = [
@@ -67,24 +62,6 @@ function AnalyticsPage() {
       />
     );
   }
-
-  if (role !== "Admin") {
-    return (
-      <Card className="flex flex-col items-center justify-center p-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-          <Lock className="h-6 w-6" />
-        </div>
-        <h1 className="mt-4 text-lg font-semibold">Analytics Restricted</h1>
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Executive dashboards are limited to Admin roles. Switch your session in the top bar.
-        </p>
-        <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-          <ShieldAlert className="h-3.5 w-3.5" /> Currently signed in as Staff
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">

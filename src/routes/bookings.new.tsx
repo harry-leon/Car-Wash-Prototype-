@@ -1,14 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { CustomerBookingForm } from "@/components/customer-booking-form";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/bookings/new")({
-  component: NewBookingPage,
+  component: () => <RouteRedirect to="/customer/bookings/new" />,
 });
 
-function NewBookingPage() {
+export function NewBookingPage() {
   const navigate = useNavigate();
   const { role } = useCarwashStore();
 
@@ -33,7 +34,7 @@ function NewBookingPage() {
             Booking uses the active customer profile, vehicle data and shop slot validation.
           </p>
         </div>
-        <CustomerBookingForm onBooked={() => navigate({ to: "/bookings" })} />
+        <CustomerBookingForm onBooked={() => navigate({ to: "/customer/bookings" })} />
       </div>
     </div>
   );

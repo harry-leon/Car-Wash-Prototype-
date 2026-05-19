@@ -24,10 +24,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { usePortal, VEHICLE_TYPES, Vehicle, VehicleType } from "@/lib/portal-store";
+import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/vehicles")({
-  component: VehiclesPage,
+  component: () => <RouteRedirect to="/customer/vehicles" />,
 });
 
 const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }>> = {
@@ -37,7 +38,7 @@ const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }
   Motorbike: Bike,
 };
 
-function VehiclesPage() {
+export function VehiclesPage() {
   const { vehicles, addVehicle, updateVehicle, deleteVehicle } = usePortal();
   const [editing, setEditing] = React.useState<Vehicle | "new" | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);

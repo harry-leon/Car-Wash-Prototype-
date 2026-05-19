@@ -8,7 +8,7 @@ export const Route = createFileRoute("/staff/check-in")({
   component: StaffCheckInPage,
 });
 
-function StaffCheckInPage() {
+export function StaffCheckInPage() {
   const { role } = useCarwashStore();
 
   if (!canAccess(role, ["Staff", "Admin"])) {

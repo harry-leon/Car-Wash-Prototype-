@@ -181,6 +181,7 @@ interface PendingRegistration {
 
 interface PersistedStore {
   role: Role;
+  isAuthenticated: boolean;
   tiers: TierRule[];
   promotions: Promotion[];
   currentCustomerId: string;
@@ -200,7 +201,10 @@ interface PersistedStore {
 
 interface Store {
   role: Role;
+  isAuthenticated: boolean;
   setRole: (role: Role) => void;
+  loginAs: (role: Role) => void;
+  logout: () => void;
   tiers: TierRule[];
   services: Service[];
   promotions: Promotion[];
@@ -419,6 +423,7 @@ function tierFor(points: number, tiers: TierRule[]): Tier {
 export function CarwashStoreProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = React.useState(false);
   const [role, setRole] = React.useState<Role>("Customer");
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [tiers, setTiers] = React.useState<TierRule[]>(tierSeed);
   const [services] = React.useState<Service[]>(serviceSeed);
   const [promotions, setPromotions] = React.useState<Promotion[]>(promotionSeed);
@@ -446,6 +451,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     }
 
     setRole(persisted.role);
+    setIsAuthenticated(Boolean(persisted.isAuthenticated));
     setTiers(persisted.tiers);
     setPromotions(persisted.promotions);
     setCurrentCustomerId(persisted.currentCustomerId);
@@ -481,6 +487,15 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
 
   const pushNotification = React.useCallback((notification: Omit<NotificationItem, "id" | "timestamp">) => {
     setNotifications((prev) => [{ ...notification, id: crypto.randomUUID(), timestamp: new Date() }, ...prev]);
+  }, []);
+
+  const loginAs = React.useCallback((nextRole: Role) => {
+    setRole(nextRole);
+    setIsAuthenticated(true);
+  }, []);
+
+  const logout = React.useCallback(() => {
+    setIsAuthenticated(false);
   }, []);
 
   const updateCurrentProfile = React.useCallback(
@@ -869,6 +884,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     if (typeof window === "undefined" || !hydrated) return;
     const payload: PersistedStore = {
       role,
+      isAuthenticated,
       tiers,
       promotions,
       currentCustomerId,
@@ -902,6 +918,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     notifications,
     pendingRegistration,
     role,
+    isAuthenticated,
     selectedBookingId,
     sessionDraft,
     tierHistory,
@@ -914,7 +931,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
 
   const value: Store = {
     role,
+    isAuthenticated,
     setRole,
+    loginAs,
+    logout,
     tiers,
     services,
     promotions,

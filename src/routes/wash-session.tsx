@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Bike, Car, CarFront, Check, Truck, User } from "lucide-react";
 import { toast } from "sonner";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { GUEST, fmtMoney, useWashStore } from "@/lib/wash-store";
 
 export const Route = createFileRoute("/wash-session")({
-  component: WashSessionPage,
+  component: () => <RouteRedirect to="/staff/wash-session" />,
 });
 
 const VEHICLES = [
@@ -23,7 +24,7 @@ const VEHICLES = [
   { id: "Motorbike", label: "Motorbike", icon: Bike },
 ];
 
-function WashSessionPage() {
+export function WashSessionPage() {
   const { role } = useCarwashStore();
   const { customers, draft, setDraft } = useWashStore();
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ function WashSessionPage() {
       services,
       walkIn: draft?.walkIn,
     });
-    navigate({ to: "/checkout" });
+    navigate({ to: "/staff/checkout" });
   };
 
   return (

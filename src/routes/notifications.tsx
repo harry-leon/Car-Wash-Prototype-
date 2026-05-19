@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { useMemo, useState } from "react";
-import { DashboardLayout } from "@/components/dashboard-layout";
 import { canAccess } from "@/lib/access-control";
 import { useAppStore, formatRelative, type NotifType } from "@/lib/app-store";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/notifications")({
-  component: () => (
-    <DashboardLayout>
-      <NotificationsPage />
-    </DashboardLayout>
-  ),
+  component: () => <RouteRedirect to="/staff/notifications" />,
 });
 
 const typeMeta: Record<NotifType, { label: string; icon: typeof Bell; classes: string; dot: string }> = {
@@ -47,7 +43,7 @@ const typeMeta: Record<NotifType, { label: string; icon: typeof Bell; classes: s
   },
 };
 
-function NotificationsPage() {
+export function NotificationsPage() {
   const { role, notifications, pushNotification } = useAppStore();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"All" | NotifType>("All");

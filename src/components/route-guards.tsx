@@ -1,0 +1,67 @@
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
+import { getHomePath } from "@/lib/auth";
+import { type Role, useCarwashStore } from "@/lib/carwash-store";
+
+function PendingState({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="rounded-xl border border-border bg-card px-6 py-4 text-sm text-muted-foreground shadow-sm">
+        {message}
+      </div>
+    </div>
+  );
+}
+
+export function GuestOnly({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+  const { isAuthenticated, role } = useCarwashStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate({ to: getHomePath(role), replace: true });
+    }
+  }, [isAuthenticated, navigate, role]);
+
+  if (isAuthenticated) {
+    return <PendingState message="Redirecting to your workspace..." />;
+  }
+
+  return <>{children}</>;
+}
+
+export function RequireRole({
+  allowed,
+  children,
+}: {
+  allowed: Role[];
+  children: React.ReactNode;
+}) {
+  const navigate = useNavigate();
+  const { isAuthenticated, role } = useCarwashStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return <PendingState message="Redirecting to sign in..." />;
+  }
+
+  if (!allowed.includes(role)) {
+    return (
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="This workspace is restricted"
+          description="Switch to the matching demo role or sign in with the correct account."
+          role={role}
+        />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}

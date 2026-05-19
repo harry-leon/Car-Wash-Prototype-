@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AccessDenied } from "@/components/access-denied";
+import { RouteRedirect } from "@/components/route-redirect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useLoyalty, tierGradient, tierBadgeClass, Reward } from "@/lib/loyalty-store";
 
 export const Route = createFileRoute("/loyalty")({
-  component: LoyaltyPage,
+  component: () => <RouteRedirect to="/customer/loyalty" />,
 });
 
 const REWARD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -31,7 +32,7 @@ const REWARD_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   Ticket,
 };
 
-function LoyaltyPage() {
+export function LoyaltyPage() {
   const { role } = useCarwashStore();
   const { customers, activeCustomerId, tiers, ledger, rewards, redeemReward } = useLoyalty();
   const customer = customers.find((item) => item.id === activeCustomerId)!;

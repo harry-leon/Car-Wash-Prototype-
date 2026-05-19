@@ -3,16 +3,18 @@ import { Check, Gift, Printer, ArrowRight, Sparkles } from "lucide-react";
 import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { canAccess } from "@/lib/access-control";
+import { getHomePath } from "@/lib/auth";
 import { useCarwashStore } from "@/lib/carwash-store";
 import { fmtMoney, useWashStore } from "@/lib/wash-store";
 import { toast } from "sonner";
 import { PageHeader, TierBadge } from "@/components/shared";
+import { RouteRedirect } from "@/components/route-redirect";
 
 export const Route = createFileRoute("/confirmation")({
-  component: ConfirmationPage,
+  component: () => <RouteRedirect to="/staff/confirmation" />,
 });
 
-function ConfirmationPage() {
+export function ConfirmationPage() {
   const { role } = useCarwashStore();
   const { lastTransaction, customers } = useWashStore();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ function ConfirmationPage() {
       <div className="mx-auto max-w-xl p-10 text-center">
         <PageHeader title="No recent transaction" subtitle="Complete a checkout to see the receipt." />
         <Button asChild className="mt-6">
-          <Link to="/">
+          <Link to="/staff/dashboard">
             Start a new wash <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -124,11 +126,11 @@ function ConfirmationPage() {
           >
             <Printer className="h-4 w-4" /> Print Receipt
           </Button>
-          <Button className="w-full" onClick={() => navigate({ to: "/" })}>
+          <Button className="w-full" onClick={() => navigate({ to: getHomePath(role) })}>
             Back to Dashboard <ArrowRight className="h-4 w-4" />
           </Button>
           <Button variant="ghost" className="w-full" asChild>
-            <Link to="/transactions">View History</Link>
+            <Link to="/customer/transactions">View History</Link>
           </Button>
         </div>
       </div>

@@ -13,15 +13,30 @@ import { Route as WashSessionRouteImport } from './routes/wash-session'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as TransactionsRouteImport } from './routes/transactions'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoyaltyRouteImport } from './routes/loyalty'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CustomerRouteImport } from './routes/customer'
 import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StaffWashSessionRouteImport } from './routes/staff.wash-session'
+import { Route as StaffNotificationsRouteImport } from './routes/staff.notifications'
+import { Route as StaffDashboardRouteImport } from './routes/staff.dashboard'
+import { Route as StaffConfirmationRouteImport } from './routes/staff.confirmation'
+import { Route as StaffCheckoutRouteImport } from './routes/staff.checkout'
 import { Route as StaffCheckInRouteImport } from './routes/staff.check-in'
+import { Route as CustomerVehiclesRouteImport } from './routes/customer.vehicles'
+import { Route as CustomerTransactionsRouteImport } from './routes/customer.transactions'
+import { Route as CustomerProfileRouteImport } from './routes/customer.profile'
+import { Route as CustomerOverviewRouteImport } from './routes/customer.overview'
+import { Route as CustomerLoyaltyRouteImport } from './routes/customer.loyalty'
+import { Route as CustomerBookingsRouteImport } from './routes/customer.bookings'
 import { Route as BookingsTrackerRouteImport } from './routes/bookings.tracker'
 import { Route as BookingsNewRouteImport } from './routes/bookings.new'
 import { Route as AdminTiersRouteImport } from './routes/admin.tiers'
@@ -29,7 +44,10 @@ import { Route as AdminTierHistoryRouteImport } from './routes/admin.tier-histor
 import { Route as AdminRbacRouteImport } from './routes/admin.rbac'
 import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
 import { Route as AdminPointsAuditRouteImport } from './routes/admin.points-audit'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as CustomerBookingsTrackerRouteImport } from './routes/customer.bookings.tracker'
+import { Route as CustomerBookingsNewRouteImport } from './routes/customer.bookings.new'
 
 const WashSessionRoute = WashSessionRouteImport.update({
   id: '/wash-session',
@@ -49,6 +67,11 @@ const VehiclesRoute = VehiclesRouteImport.update({
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -71,6 +94,16 @@ const LoyaltyRoute = LoyaltyRouteImport.update({
   path: '/loyalty',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerRoute = CustomerRouteImport.update({
+  id: '/customer',
+  path: '/customer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfirmationRoute = ConfirmationRouteImport.update({
   id: '/confirmation',
   path: '/confirmation',
@@ -86,15 +119,75 @@ const BookingsRoute = BookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffWashSessionRoute = StaffWashSessionRouteImport.update({
+  id: '/wash-session',
+  path: '/wash-session',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffDashboardRoute = StaffDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffConfirmationRoute = StaffConfirmationRouteImport.update({
+  id: '/confirmation',
+  path: '/confirmation',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffCheckoutRoute = StaffCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffCheckInRoute = StaffCheckInRouteImport.update({
-  id: '/staff/check-in',
-  path: '/staff/check-in',
-  getParentRoute: () => rootRouteImport,
+  id: '/check-in',
+  path: '/check-in',
+  getParentRoute: () => StaffRoute,
+} as any)
+const CustomerVehiclesRoute = CustomerVehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerTransactionsRoute = CustomerTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerProfileRoute = CustomerProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerOverviewRoute = CustomerOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerLoyaltyRoute = CustomerLoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
+  getParentRoute: () => CustomerRoute,
+} as any)
+const CustomerBookingsRoute = CustomerBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => CustomerRoute,
 } as any)
 const BookingsTrackerRoute = BookingsTrackerRouteImport.update({
   id: '/tracker',
@@ -107,50 +200,70 @@ const BookingsNewRoute = BookingsNewRouteImport.update({
   getParentRoute: () => BookingsRoute,
 } as any)
 const AdminTiersRoute = AdminTiersRouteImport.update({
-  id: '/admin/tiers',
-  path: '/admin/tiers',
-  getParentRoute: () => rootRouteImport,
+  id: '/tiers',
+  path: '/tiers',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminTierHistoryRoute = AdminTierHistoryRouteImport.update({
-  id: '/admin/tier-history',
-  path: '/admin/tier-history',
-  getParentRoute: () => rootRouteImport,
+  id: '/tier-history',
+  path: '/tier-history',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminRbacRoute = AdminRbacRouteImport.update({
-  id: '/admin/rbac',
-  path: '/admin/rbac',
-  getParentRoute: () => rootRouteImport,
+  id: '/rbac',
+  path: '/rbac',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminPromotionsRoute = AdminPromotionsRouteImport.update({
-  id: '/admin/promotions',
-  path: '/admin/promotions',
-  getParentRoute: () => rootRouteImport,
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminPointsAuditRoute = AdminPointsAuditRouteImport.update({
-  id: '/admin/points-audit',
-  path: '/admin/points-audit',
-  getParentRoute: () => rootRouteImport,
+  id: '/points-audit',
+  path: '/points-audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
-  id: '/admin/analytics',
-  path: '/admin/analytics',
-  getParentRoute: () => rootRouteImport,
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CustomerBookingsTrackerRoute = CustomerBookingsTrackerRouteImport.update({
+  id: '/tracker',
+  path: '/tracker',
+  getParentRoute: () => CustomerBookingsRoute,
+} as any)
+const CustomerBookingsNewRoute = CustomerBookingsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => CustomerBookingsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bookings': typeof BookingsRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/confirmation': typeof ConfirmationRoute
+  '/customer': typeof CustomerRouteWithChildren
+  '/login': typeof LoginRoute
   '/loyalty': typeof LoyaltyRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/staff': typeof StaffRouteWithChildren
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -158,22 +271,40 @@ export interface FileRoutesByFullPath {
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
+  '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/loyalty': typeof CustomerLoyaltyRoute
+  '/customer/overview': typeof CustomerOverviewRoute
+  '/customer/profile': typeof CustomerProfileRoute
+  '/customer/transactions': typeof CustomerTransactionsRoute
+  '/customer/vehicles': typeof CustomerVehiclesRoute
   '/staff/check-in': typeof StaffCheckInRoute
+  '/staff/checkout': typeof StaffCheckoutRoute
+  '/staff/confirmation': typeof StaffConfirmationRoute
+  '/staff/dashboard': typeof StaffDashboardRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/wash-session': typeof StaffWashSessionRoute
+  '/customer/bookings/new': typeof CustomerBookingsNewRoute
+  '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bookings': typeof BookingsRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/confirmation': typeof ConfirmationRoute
+  '/customer': typeof CustomerRouteWithChildren
+  '/login': typeof LoginRoute
   '/loyalty': typeof LoyaltyRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/staff': typeof StaffRouteWithChildren
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -181,23 +312,41 @@ export interface FileRoutesByTo {
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
+  '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/loyalty': typeof CustomerLoyaltyRoute
+  '/customer/overview': typeof CustomerOverviewRoute
+  '/customer/profile': typeof CustomerProfileRoute
+  '/customer/transactions': typeof CustomerTransactionsRoute
+  '/customer/vehicles': typeof CustomerVehiclesRoute
   '/staff/check-in': typeof StaffCheckInRoute
+  '/staff/checkout': typeof StaffCheckoutRoute
+  '/staff/confirmation': typeof StaffConfirmationRoute
+  '/staff/dashboard': typeof StaffDashboardRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/wash-session': typeof StaffWashSessionRoute
+  '/customer/bookings/new': typeof CustomerBookingsNewRoute
+  '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bookings': typeof BookingsRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/confirmation': typeof ConfirmationRoute
+  '/customer': typeof CustomerRouteWithChildren
+  '/login': typeof LoginRoute
   '/loyalty': typeof LoyaltyRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/staff': typeof StaffRouteWithChildren
   '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -205,24 +354,42 @@ export interface FileRoutesById {
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
+  '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/loyalty': typeof CustomerLoyaltyRoute
+  '/customer/overview': typeof CustomerOverviewRoute
+  '/customer/profile': typeof CustomerProfileRoute
+  '/customer/transactions': typeof CustomerTransactionsRoute
+  '/customer/vehicles': typeof CustomerVehiclesRoute
   '/staff/check-in': typeof StaffCheckInRoute
+  '/staff/checkout': typeof StaffCheckoutRoute
+  '/staff/confirmation': typeof StaffConfirmationRoute
+  '/staff/dashboard': typeof StaffDashboardRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/wash-session': typeof StaffWashSessionRoute
+  '/customer/bookings/new': typeof CustomerBookingsNewRoute
+  '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/bookings'
     | '/checkout'
     | '/confirmation'
+    | '/customer'
+    | '/login'
     | '/loyalty'
     | '/notifications'
     | '/profile'
     | '/register'
+    | '/staff'
     | '/transactions'
     | '/vehicles'
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/dashboard'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -230,22 +397,40 @@ export interface FileRouteTypes {
     | '/admin/tiers'
     | '/bookings/new'
     | '/bookings/tracker'
+    | '/customer/bookings'
+    | '/customer/loyalty'
+    | '/customer/overview'
+    | '/customer/profile'
+    | '/customer/transactions'
+    | '/customer/vehicles'
     | '/staff/check-in'
+    | '/staff/checkout'
+    | '/staff/confirmation'
+    | '/staff/dashboard'
+    | '/staff/notifications'
+    | '/staff/wash-session'
+    | '/customer/bookings/new'
+    | '/customer/bookings/tracker'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/bookings'
     | '/checkout'
     | '/confirmation'
+    | '/customer'
+    | '/login'
     | '/loyalty'
     | '/notifications'
     | '/profile'
     | '/register'
+    | '/staff'
     | '/transactions'
     | '/vehicles'
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/dashboard'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -253,22 +438,40 @@ export interface FileRouteTypes {
     | '/admin/tiers'
     | '/bookings/new'
     | '/bookings/tracker'
+    | '/customer/bookings'
+    | '/customer/loyalty'
+    | '/customer/overview'
+    | '/customer/profile'
+    | '/customer/transactions'
+    | '/customer/vehicles'
     | '/staff/check-in'
+    | '/staff/checkout'
+    | '/staff/confirmation'
+    | '/staff/dashboard'
+    | '/staff/notifications'
+    | '/staff/wash-session'
+    | '/customer/bookings/new'
+    | '/customer/bookings/tracker'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/bookings'
     | '/checkout'
     | '/confirmation'
+    | '/customer'
+    | '/login'
     | '/loyalty'
     | '/notifications'
     | '/profile'
     | '/register'
+    | '/staff'
     | '/transactions'
     | '/vehicles'
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/dashboard'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -276,29 +479,39 @@ export interface FileRouteTypes {
     | '/admin/tiers'
     | '/bookings/new'
     | '/bookings/tracker'
+    | '/customer/bookings'
+    | '/customer/loyalty'
+    | '/customer/overview'
+    | '/customer/profile'
+    | '/customer/transactions'
+    | '/customer/vehicles'
     | '/staff/check-in'
+    | '/staff/checkout'
+    | '/staff/confirmation'
+    | '/staff/dashboard'
+    | '/staff/notifications'
+    | '/staff/wash-session'
+    | '/customer/bookings/new'
+    | '/customer/bookings/tracker'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BookingsRoute: typeof BookingsRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   ConfirmationRoute: typeof ConfirmationRoute
+  CustomerRoute: typeof CustomerRouteWithChildren
+  LoginRoute: typeof LoginRoute
   LoyaltyRoute: typeof LoyaltyRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
+  StaffRoute: typeof StaffRouteWithChildren
   TransactionsRoute: typeof TransactionsRoute
   VehiclesRoute: typeof VehiclesRoute
   VerifyRoute: typeof VerifyRoute
   WashSessionRoute: typeof WashSessionRoute
-  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
-  AdminPointsAuditRoute: typeof AdminPointsAuditRoute
-  AdminPromotionsRoute: typeof AdminPromotionsRoute
-  AdminRbacRoute: typeof AdminRbacRoute
-  AdminTierHistoryRoute: typeof AdminTierHistoryRoute
-  AdminTiersRoute: typeof AdminTiersRoute
-  StaffCheckInRoute: typeof StaffCheckInRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -331,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -359,6 +579,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoyaltyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer': {
+      id: '/customer'
+      path: '/customer'
+      fullPath: '/customer'
+      preLoaderRoute: typeof CustomerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/confirmation': {
       id: '/confirmation'
       path: '/confirmation'
@@ -380,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -387,12 +628,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/wash-session': {
+      id: '/staff/wash-session'
+      path: '/wash-session'
+      fullPath: '/staff/wash-session'
+      preLoaderRoute: typeof StaffWashSessionRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/notifications': {
+      id: '/staff/notifications'
+      path: '/notifications'
+      fullPath: '/staff/notifications'
+      preLoaderRoute: typeof StaffNotificationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/dashboard': {
+      id: '/staff/dashboard'
+      path: '/dashboard'
+      fullPath: '/staff/dashboard'
+      preLoaderRoute: typeof StaffDashboardRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/confirmation': {
+      id: '/staff/confirmation'
+      path: '/confirmation'
+      fullPath: '/staff/confirmation'
+      preLoaderRoute: typeof StaffConfirmationRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/checkout': {
+      id: '/staff/checkout'
+      path: '/checkout'
+      fullPath: '/staff/checkout'
+      preLoaderRoute: typeof StaffCheckoutRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/staff/check-in': {
       id: '/staff/check-in'
-      path: '/staff/check-in'
+      path: '/check-in'
       fullPath: '/staff/check-in'
       preLoaderRoute: typeof StaffCheckInRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/customer/vehicles': {
+      id: '/customer/vehicles'
+      path: '/vehicles'
+      fullPath: '/customer/vehicles'
+      preLoaderRoute: typeof CustomerVehiclesRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/transactions': {
+      id: '/customer/transactions'
+      path: '/transactions'
+      fullPath: '/customer/transactions'
+      preLoaderRoute: typeof CustomerTransactionsRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/profile': {
+      id: '/customer/profile'
+      path: '/profile'
+      fullPath: '/customer/profile'
+      preLoaderRoute: typeof CustomerProfileRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/overview': {
+      id: '/customer/overview'
+      path: '/overview'
+      fullPath: '/customer/overview'
+      preLoaderRoute: typeof CustomerOverviewRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/loyalty': {
+      id: '/customer/loyalty'
+      path: '/loyalty'
+      fullPath: '/customer/loyalty'
+      preLoaderRoute: typeof CustomerLoyaltyRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/bookings': {
+      id: '/customer/bookings'
+      path: '/bookings'
+      fullPath: '/customer/bookings'
+      preLoaderRoute: typeof CustomerBookingsRouteImport
+      parentRoute: typeof CustomerRoute
     }
     '/bookings/tracker': {
       id: '/bookings/tracker'
@@ -410,48 +728,91 @@ declare module '@tanstack/react-router' {
     }
     '/admin/tiers': {
       id: '/admin/tiers'
-      path: '/admin/tiers'
+      path: '/tiers'
       fullPath: '/admin/tiers'
       preLoaderRoute: typeof AdminTiersRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/tier-history': {
       id: '/admin/tier-history'
-      path: '/admin/tier-history'
+      path: '/tier-history'
       fullPath: '/admin/tier-history'
       preLoaderRoute: typeof AdminTierHistoryRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/rbac': {
       id: '/admin/rbac'
-      path: '/admin/rbac'
+      path: '/rbac'
       fullPath: '/admin/rbac'
       preLoaderRoute: typeof AdminRbacRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/promotions': {
       id: '/admin/promotions'
-      path: '/admin/promotions'
+      path: '/promotions'
       fullPath: '/admin/promotions'
       preLoaderRoute: typeof AdminPromotionsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/points-audit': {
       id: '/admin/points-audit'
-      path: '/admin/points-audit'
+      path: '/points-audit'
       fullPath: '/admin/points-audit'
       preLoaderRoute: typeof AdminPointsAuditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/analytics': {
       id: '/admin/analytics'
-      path: '/admin/analytics'
+      path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/customer/bookings/tracker': {
+      id: '/customer/bookings/tracker'
+      path: '/tracker'
+      fullPath: '/customer/bookings/tracker'
+      preLoaderRoute: typeof CustomerBookingsTrackerRouteImport
+      parentRoute: typeof CustomerBookingsRoute
+    }
+    '/customer/bookings/new': {
+      id: '/customer/bookings/new'
+      path: '/new'
+      fullPath: '/customer/bookings/new'
+      preLoaderRoute: typeof CustomerBookingsNewRouteImport
+      parentRoute: typeof CustomerBookingsRoute
     }
   }
 }
+
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminPointsAuditRoute: typeof AdminPointsAuditRoute
+  AdminPromotionsRoute: typeof AdminPromotionsRoute
+  AdminRbacRoute: typeof AdminRbacRoute
+  AdminTierHistoryRoute: typeof AdminTierHistoryRoute
+  AdminTiersRoute: typeof AdminTiersRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminPointsAuditRoute: AdminPointsAuditRoute,
+  AdminPromotionsRoute: AdminPromotionsRoute,
+  AdminRbacRoute: AdminRbacRoute,
+  AdminTierHistoryRoute: AdminTierHistoryRoute,
+  AdminTiersRoute: AdminTiersRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface BookingsRouteChildren {
   BookingsNewRoute: typeof BookingsNewRoute
@@ -467,27 +828,89 @@ const BookingsRouteWithChildren = BookingsRoute._addFileChildren(
   BookingsRouteChildren,
 )
 
+interface CustomerBookingsRouteChildren {
+  CustomerBookingsNewRoute: typeof CustomerBookingsNewRoute
+  CustomerBookingsTrackerRoute: typeof CustomerBookingsTrackerRoute
+}
+
+const CustomerBookingsRouteChildren: CustomerBookingsRouteChildren = {
+  CustomerBookingsNewRoute: CustomerBookingsNewRoute,
+  CustomerBookingsTrackerRoute: CustomerBookingsTrackerRoute,
+}
+
+const CustomerBookingsRouteWithChildren =
+  CustomerBookingsRoute._addFileChildren(CustomerBookingsRouteChildren)
+
+interface CustomerRouteChildren {
+  CustomerBookingsRoute: typeof CustomerBookingsRouteWithChildren
+  CustomerLoyaltyRoute: typeof CustomerLoyaltyRoute
+  CustomerOverviewRoute: typeof CustomerOverviewRoute
+  CustomerProfileRoute: typeof CustomerProfileRoute
+  CustomerTransactionsRoute: typeof CustomerTransactionsRoute
+  CustomerVehiclesRoute: typeof CustomerVehiclesRoute
+}
+
+const CustomerRouteChildren: CustomerRouteChildren = {
+  CustomerBookingsRoute: CustomerBookingsRouteWithChildren,
+  CustomerLoyaltyRoute: CustomerLoyaltyRoute,
+  CustomerOverviewRoute: CustomerOverviewRoute,
+  CustomerProfileRoute: CustomerProfileRoute,
+  CustomerTransactionsRoute: CustomerTransactionsRoute,
+  CustomerVehiclesRoute: CustomerVehiclesRoute,
+}
+
+const CustomerRouteWithChildren = CustomerRoute._addFileChildren(
+  CustomerRouteChildren,
+)
+
+interface StaffRouteChildren {
+  StaffCheckInRoute: typeof StaffCheckInRoute
+  StaffCheckoutRoute: typeof StaffCheckoutRoute
+  StaffConfirmationRoute: typeof StaffConfirmationRoute
+  StaffDashboardRoute: typeof StaffDashboardRoute
+  StaffNotificationsRoute: typeof StaffNotificationsRoute
+  StaffWashSessionRoute: typeof StaffWashSessionRoute
+}
+
+const StaffRouteChildren: StaffRouteChildren = {
+  StaffCheckInRoute: StaffCheckInRoute,
+  StaffCheckoutRoute: StaffCheckoutRoute,
+  StaffConfirmationRoute: StaffConfirmationRoute,
+  StaffDashboardRoute: StaffDashboardRoute,
+  StaffNotificationsRoute: StaffNotificationsRoute,
+  StaffWashSessionRoute: StaffWashSessionRoute,
+}
+
+const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   BookingsRoute: BookingsRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   ConfirmationRoute: ConfirmationRoute,
+  CustomerRoute: CustomerRouteWithChildren,
+  LoginRoute: LoginRoute,
   LoyaltyRoute: LoyaltyRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
+  StaffRoute: StaffRouteWithChildren,
   TransactionsRoute: TransactionsRoute,
   VehiclesRoute: VehiclesRoute,
   VerifyRoute: VerifyRoute,
   WashSessionRoute: WashSessionRoute,
-  AdminAnalyticsRoute: AdminAnalyticsRoute,
-  AdminPointsAuditRoute: AdminPointsAuditRoute,
-  AdminPromotionsRoute: AdminPromotionsRoute,
-  AdminRbacRoute: AdminRbacRoute,
-  AdminTierHistoryRoute: AdminTierHistoryRoute,
-  AdminTiersRoute: AdminTiersRoute,
-  StaffCheckInRoute: StaffCheckInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

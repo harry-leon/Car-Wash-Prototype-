@@ -11,7 +11,6 @@ import {
 import appCss from "../styles.css?url";
 import { CarwashStoreProvider } from "@/lib/carwash-store";
 import { Toaster } from "@/components/ui/sonner";
-import { CarwashShell } from "@/components/carwash-shell";
 
 function NotFoundComponent() {
   return (
@@ -117,7 +116,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <CarwashStoreProvider>
-        <CarwashShell />
+        <Outlet />
         <Toaster richColors position="top-right" />
       </CarwashStoreProvider>
     </QueryClientProvider>
