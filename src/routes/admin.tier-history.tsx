@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, ArrowDownRight, ArrowRight, History } from "lucide-react";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { useLoyalty, TierName, tierBadgeClass } from "@/lib/loyalty-store";
 
@@ -23,8 +26,19 @@ const TIER_ORDER: Record<TierName, number> = { Member: 0, Silver: 1, Gold: 2, Pl
 type Filter = "All" | "Upgrades" | "Downgrades";
 
 function AuditPage() {
+  const { role } = useCarwashStore();
   const { audit } = useLoyalty();
   const [filter, setFilter] = React.useState<Filter>("All");
+
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="Tier history is restricted"
+        description="Only Admin can review the tier audit trail."
+        role={role}
+      />
+    );
+  }
 
   const filtered = audit.filter((a) => {
     const diff = TIER_ORDER[a.newTier] - TIER_ORDER[a.previousTier];

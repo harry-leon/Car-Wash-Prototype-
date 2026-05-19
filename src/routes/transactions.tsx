@@ -17,6 +17,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { AccessDenied } from "@/components/access-denied";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { Transaction, fmtMoney, useWashStore } from "@/lib/wash-store";
 import { PageHeader, TierBadge } from "@/components/shared";
 
@@ -25,10 +28,23 @@ export const Route = createFileRoute("/transactions")({
 });
 
 function HistoryPage() {
+  const { role } = useCarwashStore();
   const { transactions } = useWashStore();
   const [search, setSearch] = React.useState("");
   const [tierFilter, setTierFilter] = React.useState("all");
   const [active, setActive] = React.useState<Transaction | null>(null);
+
+  if (!canAccess(role, ["Customer", "Admin"])) {
+    return (
+      <div className="mx-auto max-w-7xl p-6 md:p-10">
+        <AccessDenied
+          title="Transaction history is restricted"
+          description="Only Customer and Admin roles can review transaction receipts in this module."
+          role={role}
+        />
+      </div>
+    );
+  }
 
   const filtered = transactions.filter((t) => {
     const matchPlate = t.plate.toLowerCase().includes(search.trim().toLowerCase());

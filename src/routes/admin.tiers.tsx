@@ -2,12 +2,15 @@ import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Save, Crown, Award, Medal, Gem } from "lucide-react";
 import { toast } from "sonner";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { useLoyalty, TierRule, TierName, tierBadgeClass } from "@/lib/loyalty-store";
 
@@ -37,10 +40,21 @@ function tierStripeClass(tier: TierName) {
 }
 
 function TierRulesPage() {
+  const { role } = useCarwashStore();
   const { tiers, updateTiers, customers } = useLoyalty();
   const [draft, setDraft] = React.useState<TierRule[]>(tiers);
 
   React.useEffect(() => setDraft(tiers), [tiers]);
+
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="Tier rules are restricted"
+        description="Only Admin can change membership thresholds and multipliers."
+        role={role}
+      />
+    );
+  }
 
   const update = (i: number, patch: Partial<TierRule>) =>
     setDraft((prev) => prev.map((t, idx) => (idx === i ? { ...t, ...patch } : t)));

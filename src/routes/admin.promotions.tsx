@@ -2,6 +2,7 @@ import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Tag, Power } from "lucide-react";
 import { toast } from "sonner";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { useLoyalty, TierName, tierBadgeClass } from "@/lib/loyalty-store";
 
@@ -27,12 +30,23 @@ export const Route = createFileRoute("/admin/promotions")({
 const ALL_TIERS: TierName[] = ["Member", "Silver", "Gold", "Platinum"];
 
 function PromotionsPage() {
+  const { role } = useCarwashStore();
   const { promotions, addPromotion, togglePromotion } = useLoyalty();
 
   const [code, setCode] = React.useState("");
   const [discountType, setDiscountType] = React.useState<"Percentage" | "Flat">("Percentage");
   const [amount, setAmount] = React.useState(10);
   const [tiers, setTiers] = React.useState<TierName[]>(["Gold"]);
+
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="Promotions are restricted"
+        description="Only Admin can manage tier-targeted promotions."
+        role={role}
+      />
+    );
+  }
 
   const toggleTier = (t: TierName) =>
     setTiers((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));

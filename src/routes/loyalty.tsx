@@ -11,9 +11,12 @@ import {
   Gift,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useLoyalty, tierGradient, tierBadgeClass, Reward } from "@/lib/loyalty-store";
@@ -29,8 +32,21 @@ const REWARD_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 function LoyaltyPage() {
+  const { role } = useCarwashStore();
   const { customers, activeCustomerId, tiers, ledger, rewards, redeemReward } = useLoyalty();
   const customer = customers.find((item) => item.id === activeCustomerId)!;
+
+  if (!canAccess(role, ["Customer", "Admin"])) {
+    return (
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Loyalty access is restricted"
+          description="Only Customer and Admin roles can review or redeem loyalty rewards."
+          role={role}
+        />
+      </div>
+    );
+  }
 
   const sortedTiers = [...tiers].sort((a, b) => a.threshold - b.threshold);
   const currentIdx = sortedTiers.findIndex((tier) => tier.name === customer.tier);

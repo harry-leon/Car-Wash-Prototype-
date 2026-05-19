@@ -1,6 +1,6 @@
-import { useCarwashStore, BookingStatus, VehicleType, formatMoney } from "@/lib/carwash-store";
+import { useCarwashStore, BookingStatus, VehicleType, WashStatus, formatMoney } from "@/lib/carwash-store";
 
-export type { BookingStatus };
+export type { BookingStatus, WashStatus };
 
 export interface Vehicle {
   id: string;
@@ -27,6 +27,15 @@ export interface Booking {
   dateISO: string;
   status: BookingStatus;
   isWalkIn?: boolean;
+  checkInAt?: string;
+  washStatus?: WashStatus;
+  completedAt?: string;
+  checkoutTransactionId?: string;
+  checkoutAmount?: number;
+  checkoutPaymentMethod?: string;
+  checkoutPointsEarned?: number;
+  checkoutPointsRedeemed?: number;
+  checkoutPromoCode?: string;
 }
 
 export function useBookings() {
@@ -43,11 +52,21 @@ export function useBookings() {
       dateISO: booking.dateISO,
       status: booking.status,
       isWalkIn: booking.isWalkIn,
+      checkInAt: booking.checkInAt,
+      washStatus: booking.washStatus,
+      completedAt: booking.completedAt,
+      checkoutTransactionId: booking.checkoutTransactionId,
+      checkoutAmount: booking.checkoutAmount,
+      checkoutPaymentMethod: booking.checkoutPaymentMethod,
+      checkoutPointsEarned: booking.checkoutPointsEarned,
+      checkoutPointsRedeemed: booking.checkoutPointsRedeemed,
+      checkoutPromoCode: booking.checkoutPromoCode,
     })),
     addBooking: store.createBookingFromLegacy,
     updateStatus: store.updateBookingStatus,
     selectedBookingId: store.selectedBookingId,
     setSelectedBookingId: store.setSelectedBookingId,
+    transactions: store.transactions,
   };
 }
 

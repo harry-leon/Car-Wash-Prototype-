@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { canAccess } from "@/lib/access-control";
 import { useAppStore } from "@/lib/app-store";
 import { Card } from "@/components/ui/card";
 import {
@@ -55,6 +57,16 @@ const maxPromo = Math.max(...promos.map((p) => p.uses));
 
 function AnalyticsPage() {
   const { role } = useAppStore();
+
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="Analytics are restricted"
+        description="Only Admin can access executive analytics dashboards."
+        role={role}
+      />
+    );
+  }
 
   if (role !== "Admin") {
     return (

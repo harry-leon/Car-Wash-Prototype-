@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { canAccess } from "@/lib/access-control";
 import { useAppStore } from "@/lib/app-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,13 +27,23 @@ function RbacPage() {
   const { role, setRole } = useAppStore();
   const isStaff = role === "Staff";
 
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="RBAC configuration is restricted"
+        description="Only Admin can inspect and manage the permission matrix."
+        role={role}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Active Wash Session</h1>
           <p className="text-sm text-muted-foreground">
-            Live checkout floor — surface adjusts based on the active role.
+            Live checkout floor - surface adjusts based on the active role.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -57,12 +69,11 @@ function RbacPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Active wash card — always visible */}
         <Card className="p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CarFront className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold">Bay 2 — In Progress</h2>
+              <h2 className="text-sm font-semibold">Bay 2 - In Progress</h2>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
@@ -88,7 +99,6 @@ function RbacPage() {
           </div>
         </Card>
 
-        {/* Restricted card — admin only */}
         {isStaff ? (
           <Card className="flex flex-col items-center justify-center p-6 text-center">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
@@ -112,12 +122,12 @@ function RbacPage() {
                 "Package & add-on pricing",
                 "Loyalty multiplier config",
                 "Promotion eligibility matrix",
-              ].map((x) => (
+              ].map((item) => (
                 <li
-                  key={x}
+                  key={item}
                   className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs"
                 >
-                  <span>{x}</span>
+                  <span>{item}</span>
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
                     Edit
                   </Button>
@@ -151,14 +161,19 @@ function RbacPage() {
                 ["Manual points adjustments", true, false],
                 ["Edit pricing & packages", true, false],
                 ["Override system configurations", true, false],
-              ].map(([cap, a, s]) => {
-                const allowed = role === "Admin" ? a : s;
+              ].map(([capability, adminAllowed, staffAllowed]) => {
+                const allowed = role === "Admin" ? adminAllowed : staffAllowed;
+
                 return (
-                  <tr key={cap as string}>
-                    <td className="px-3 py-2">{cap}</td>
+                  <tr key={capability as string}>
+                    <td className="px-3 py-2">{capability}</td>
                     <td className="px-3 py-2 text-emerald-600">✓</td>
                     <td className="px-3 py-2">
-                      {s ? <span className="text-emerald-600">✓</span> : <span className="text-muted-foreground">—</span>}
+                      {staffAllowed ? (
+                        <span className="text-emerald-600">✓</span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       {allowed ? (

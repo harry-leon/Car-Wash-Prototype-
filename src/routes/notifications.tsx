@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
 import { useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { canAccess } from "@/lib/access-control";
 import { useAppStore, formatRelative, type NotifType } from "@/lib/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,9 +48,19 @@ const typeMeta: Record<NotifType, { label: string; icon: typeof Bell; classes: s
 };
 
 function NotificationsPage() {
-  const { notifications, pushNotification } = useAppStore();
+  const { role, notifications, pushNotification } = useAppStore();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"All" | NotifType>("All");
+
+  if (!canAccess(role, ["Staff", "Admin"])) {
+    return (
+      <AccessDenied
+        title="Notifications are restricted"
+          description="Only Staff and Admin roles can access the notification center."
+        role={role}
+      />
+    );
+  }
 
   const filtered = useMemo(() => {
     return notifications.filter((n) => {

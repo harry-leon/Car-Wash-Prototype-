@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Calendar as CalIcon,
   Car,
@@ -9,10 +9,12 @@ import {
 } from "lucide-react";
 import {
   fmtBookingMoney,
+  BookingStatus,
   useAvailableServices,
   useBookings,
   useCurrentVehicles,
 } from "@/lib/booking-store";
+import { formatDateISO } from "@/lib/carwash-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -30,11 +32,13 @@ const SLOTS = [
   "04:00 PM",
 ];
 const FULL_SLOTS = new Set(["10:00 AM", "03:00 PM"]);
+const ACTIVE_STATUSES: BookingStatus[] = ["Pending", "Confirmed", "Checked-in"];
 
 export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
-  const { addBooking } = useBookings();
+  const { addBooking, bookings } = useBookings();
   const vehicles = useCurrentVehicles();
   const services = useAvailableServices();
+  const [mounted, setMounted] = useState(false);
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? "");
   const [serviceIds, setServiceIds] = useState<string[]>(services[0] ? [services[0].id] : []);
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -42,10 +46,42 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
 
   const vehicle = vehicles.find((item) => item.id === vehicleId) ?? vehicles[0];
   const selectedServices = services.filter((item) => serviceIds.includes(item.id));
+  const dateISO = date ? formatDateISO(date) : "";
   const total = useMemo(
     () => selectedServices.reduce((sum, service) => sum + service.price, 0),
     [selectedServices],
   );
+  const blockedSlots = useMemo(() => {
+    const counts = new Map<string, number>();
+    const blocked = new Set<string>(FULL_SLOTS);
+
+    bookings
+      .filter((booking) => booking.dateISO === dateISO && ACTIVE_STATUSES.includes(booking.status))
+      .forEach((booking) => {
+        counts.set(booking.scheduledAt.split(" ").slice(-2).join(" "), (counts.get(booking.scheduledAt.split(" ").slice(-2).join(" ")) ?? 0) + 1);
+        if (vehicle && booking.vehiclePlate === vehicle.plate) {
+          blocked.add(booking.scheduledAt.split(" ").slice(-2).join(" "));
+        }
+      });
+
+    for (const [timeSlot, count] of counts.entries()) {
+      if (count >= 3) blocked.add(timeSlot);
+    }
+
+    return blocked;
+  }, [bookings, dateISO, vehicle]);
+  const firstAvailableSlot = SLOTS.find((item) => !blockedSlots.has(item)) ?? "";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (slot && !blockedSlots.has(slot)) return;
+    if (firstAvailableSlot && slot !== firstAvailableSlot) {
+      setSlot(firstAvailableSlot);
+    }
+  }, [blockedSlots, firstAvailableSlot, slot]);
 
   const toggleService = (id: string) =>
     setServiceIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -66,7 +102,7 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
         services: selectedServices.map((item) => item.name),
         totalPrice: total,
         scheduledAt: `${dateLabel} ${slot}`,
-        dateISO: date.toISOString().slice(0, 10),
+        dateISO,
         status: "Confirmed",
       });
       toast.success(`Booking ${id} confirmed!`);
@@ -75,6 +111,31 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
       toast.error(error instanceof Error ? error.message : "Unable to create booking.");
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="p-6">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Loading booking options
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Preparing available vehicles, services, and booking slots.
+            </p>
+          </Card>
+        </div>
+        <div className="lg:col-span-1">
+          <Card className="p-6">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Summary
+            </h3>
+            <p className="text-sm text-muted-foreground">Loading current booking draft...</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -159,15 +220,15 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {SLOTS.map((item) => {
-                  const full = FULL_SLOTS.has(item);
+                  const unavailable = blockedSlots.has(item);
                   return (
                     <button
                       key={item}
                       type="button"
-                      disabled={full}
+                      disabled={unavailable}
                       onClick={() => setSlot(item)}
                       className={`rounded-md border py-2.5 text-sm font-medium transition-all ${
-                        full
+                        unavailable
                           ? "cursor-not-allowed bg-muted text-muted-foreground/50 line-through"
                           : slot === item
                             ? "border-primary bg-primary text-primary-foreground"
@@ -179,6 +240,11 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                   );
                 })}
               </div>
+              {!firstAvailableSlot && (
+                <div className="mt-3 text-xs text-rose-600">
+                  No valid slots remain for this vehicle on the selected date.
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -224,7 +290,12 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
               <span>{fmtBookingMoney(total)}</span>
             </div>
           </div>
-          <Button className="mt-6 w-full" size="lg" onClick={confirm}>
+          <Button
+            className="mt-6 w-full"
+            size="lg"
+            onClick={confirm}
+            disabled={!vehicle || !date || !slot || serviceIds.length === 0 || !firstAvailableSlot}
+          >
             Confirm Booking
           </Button>
         </Card>

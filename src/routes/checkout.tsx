@@ -10,10 +10,13 @@ import {
   Tag,
   XCircle,
 } from "lucide-react";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { fmtMoney, useWashStore } from "@/lib/wash-store";
 import { toast } from "sonner";
@@ -30,6 +33,7 @@ const PAYMENT_METHODS = [
 ];
 
 function CheckoutPage() {
+  const { role } = useCarwashStore();
   const { draft, promotions, completeCheckout, setDraft } = useWashStore();
   const navigate = useNavigate();
 
@@ -38,6 +42,19 @@ function CheckoutPage() {
   const [promoError, setPromoError] = React.useState<string | null>(null);
   const [pointsToRedeem, setPointsToRedeem] = React.useState(0);
   const [payment, setPayment] = React.useState("card");
+  const [processing, setProcessing] = React.useState(false);
+
+  if (!canAccess(role, ["Staff", "Admin"])) {
+    return (
+      <div className="mx-auto max-w-7xl p-6 md:p-10">
+        <AccessDenied
+          title="Checkout access is restricted"
+          description="Only Staff and Admin roles can complete payment and checkout."
+          role={role}
+        />
+      </div>
+    );
+  }
 
   if (!draft) {
     return (
@@ -68,7 +85,7 @@ function CheckoutPage() {
   const safePoints = Math.min(pointsToRedeem, maxRedeem);
   const pointsValue = safePoints * 1000;
   const finalAmount = Math.max(0, afterPromo - pointsValue);
-  const pointsEarned = Math.floor(finalAmount / 10000);
+  const pointsEarned = Math.floor(Math.floor(finalAmount / 10000) * (draft.customer.multiplier ?? 1));
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase();
@@ -97,12 +114,15 @@ function CheckoutPage() {
   };
 
   const processPayment = () => {
+    if (processing) return;
+    setProcessing(true);
     const tx = completeCheckout({
       promoCode: appliedPromo,
       pointsRedeemed: safePoints,
       paymentMethod: PAYMENT_METHODS.find((item) => item.id === payment)?.label ?? payment,
     });
     if (!tx) {
+      setProcessing(false);
       toast.error("No active wash session available for checkout.");
       return;
     }
@@ -126,7 +146,7 @@ function CheckoutPage() {
               <span className="text-sm font-medium">{draft.customer.name}</span>
               <TierBadge tier={draft.customer.tier} />
               <span className="text-xs text-muted-foreground">
-                {draft.vehicleType} · <span className="font-mono">{draft.plate}</span>
+                {draft.vehicleType} / <span className="font-mono">{draft.plate}</span>
               </span>
             </div>
             <div className="overflow-hidden rounded-lg border border-border">
@@ -236,7 +256,7 @@ function CheckoutPage() {
                     className="w-28"
                   />
                   <span className="text-sm text-muted-foreground">
-                    pts → <strong className="text-emerald-700">-{fmtMoney(pointsValue)}</strong>
+                    pts {"->"} <strong className="text-emerald-700">-{fmtMoney(pointsValue)}</strong>
                   </span>
                 </div>
               </>
@@ -298,8 +318,8 @@ function CheckoutPage() {
               <span className="text-3xl font-bold tracking-tight">{fmtMoney(finalAmount)}</span>
             </div>
             <div className="mt-2 text-xs text-muted-foreground">Estimated points earned: +{pointsEarned}</div>
-            <Button className="mt-5 w-full" size="lg" onClick={processPayment}>
-              Process Payment
+            <Button className="mt-5 w-full" size="lg" onClick={processPayment} disabled={processing}>
+              {processing ? "Processing..." : "Process Payment"}
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button asChild variant="ghost" className="mt-2 w-full">

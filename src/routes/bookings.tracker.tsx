@@ -1,11 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
 import { LiveTracker } from "@/components/live-tracker";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/bookings/tracker")({
   component: BookingTrackerPage,
 });
 
 function BookingTrackerPage() {
+  const { role } = useCarwashStore();
+
+  if (!canAccess(role, ["Customer", "Admin"])) {
+    return (
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Tracker access is restricted"
+          description="Only Customer and Admin roles can open the booking tracker view."
+          role={role}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 md:p-10">
       <div className="mx-auto max-w-6xl">

@@ -1,5 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AccessDenied } from "@/components/access-denied";
 import { CustomerBookingForm } from "@/components/customer-booking-form";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/bookings/new")({
   component: NewBookingPage,
@@ -7,6 +10,19 @@ export const Route = createFileRoute("/bookings/new")({
 
 function NewBookingPage() {
   const navigate = useNavigate();
+  const { role } = useCarwashStore();
+
+  if (!canAccess(role, ["Customer", "Admin"])) {
+    return (
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Booking creation is restricted"
+          description="Only Customer and Admin roles can create a new booking from this module."
+          role={role}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-10">

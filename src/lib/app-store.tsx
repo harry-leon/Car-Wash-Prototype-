@@ -1,12 +1,11 @@
-import { useCarwashStore, NotificationType } from "@/lib/carwash-store";
+import { useCarwashStore, NotificationType, Role } from "@/lib/carwash-store";
 
-export type Role = "Admin" | "Staff";
 export type NotifType = NotificationType;
 
 export function useAppStore() {
   const store = useCarwashStore();
   return {
-    role: store.role === "Customer" ? "Staff" : store.role,
+    role: store.role,
     setRole: (role: Role) => store.setRole(role),
     notifications: store.notifications,
     pushNotification: store.pushNotification,

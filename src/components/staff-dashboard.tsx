@@ -23,11 +23,13 @@ import { useCarwashStore } from "@/lib/carwash-store";
 import { toast } from "sonner";
 
 export function StaffDashboard() {
-  const { bookings, updateStatus } = useBookings();
+  const { bookings } = useBookings();
   const { prepareSessionForBooking, createWalkInBooking } = useCarwashStore();
   const servicesCatalog = useAvailableServices();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [processingBookingId, setProcessingBookingId] = useState<string | null>(null);
+  const [submittingWalkIn, setSubmittingWalkIn] = useState(false);
   const filtered = bookings.filter(
     (booking) =>
       (booking.status === "Confirmed" || booking.status === "Pending") &&
@@ -42,6 +44,7 @@ export function StaffDashboard() {
   );
 
   const submitWalkIn = () => {
+    if (submittingWalkIn) return;
     if (!plate.trim()) {
       toast.error("License plate required");
       return;
@@ -51,11 +54,18 @@ export function StaffDashboard() {
       return;
     }
 
-    const id = createWalkInBooking({ plate, vehicleType: vType, serviceIds });
-    toast.success(`Walk-in ${id} checked in!`);
-    setPlate("");
-    setServiceIds(servicesCatalog[0] ? [servicesCatalog[0].id] : []);
-    navigate({ to: "/wash-session" });
+    try {
+      setSubmittingWalkIn(true);
+      const id = createWalkInBooking({ plate, vehicleType: vType, serviceIds });
+      toast.success(`Walk-in ${id} checked in!`);
+      setPlate("");
+      setServiceIds(servicesCatalog[0] ? [servicesCatalog[0].id] : []);
+      navigate({ to: "/wash-session" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create walk-in booking.");
+    } finally {
+      setSubmittingWalkIn(false);
+    }
   };
 
   return (
@@ -119,19 +129,22 @@ export function StaffDashboard() {
                   <td className="p-4 text-right">
                     <Button
                       size="sm"
+                      disabled={processingBookingId === booking.id}
                       onClick={() => {
                         try {
-                          updateStatus(booking.id, "Checked-in");
+                          setProcessingBookingId(booking.id);
                           prepareSessionForBooking(booking.id);
                           toast.success(`${booking.id} checked in`);
                           navigate({ to: "/wash-session" });
                         } catch (error) {
                           toast.error(error instanceof Error ? error.message : "Unable to check in booking.");
+                        } finally {
+                          setProcessingBookingId(null);
                         }
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700"
                     >
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> Check-In
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> {processingBookingId === booking.id ? "Checking in..." : "Check-In"}
                     </Button>
                   </td>
                 </tr>
@@ -202,10 +215,11 @@ export function StaffDashboard() {
             </div>
             <Button
               onClick={submitWalkIn}
+              disabled={submittingWalkIn}
               className="w-full bg-emerald-600 hover:bg-emerald-700"
               size="lg"
             >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Create & Check-In
+              <CheckCircle2 className="mr-2 h-4 w-4" /> {submittingWalkIn ? "Creating..." : "Create & Check-In"}
             </Button>
           </div>
         </Card>

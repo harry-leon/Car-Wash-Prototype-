@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { AccessDenied } from "@/components/access-denied";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { canAccess } from "@/lib/access-control";
 import { useAppStore, formatRelative } from "@/lib/app-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,16 @@ export const Route = createFileRoute("/admin/points-audit")({
 
 function AuditPage() {
   const { role, adjustments, addAdjustment } = useAppStore();
+
+  if (!canAccess(role, ["Admin"])) {
+    return (
+      <AccessDenied
+        title="Points audit is restricted"
+        description="Only Admin can open the manual points adjustment audit log."
+        role={role}
+      />
+    );
+  }
 
   if (role !== "Admin") {
     return (

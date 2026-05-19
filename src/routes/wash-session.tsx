@@ -2,10 +2,13 @@ import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Bike, Car, CarFront, Check, Truck, User } from "lucide-react";
 import { toast } from "sonner";
+import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { canAccess } from "@/lib/access-control";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { GUEST, fmtMoney, useWashStore } from "@/lib/wash-store";
 
@@ -21,6 +24,7 @@ const VEHICLES = [
 ];
 
 function WashSessionPage() {
+  const { role } = useCarwashStore();
   const { customers, draft, setDraft } = useWashStore();
   const navigate = useNavigate();
   const [customerId, setCustomerId] = React.useState<string>(draft?.customer.id ?? customers[0]?.id ?? "guest");
@@ -41,16 +45,31 @@ function WashSessionPage() {
   const services = serviceCatalog.filter((service) => selectedServices.includes(service.id));
   const subtotal = services.reduce((sum, service) => sum + service.price, 0);
 
+  if (!canAccess(role, ["Staff", "Admin"])) {
+    return (
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Wash session access is restricted"
+          description="Only Staff and Admin roles can prepare a wash session."
+          role={role}
+        />
+      </div>
+    );
+  }
+
   const handleProceed = () => {
     if (!plate.trim() || services.length === 0) {
       toast.error("Please capture plate and service package before checkout.");
       return;
     }
+
     setDraft({
+      bookingId: draft?.bookingId,
       customer,
       vehicleType,
       plate: plate.trim().toUpperCase(),
       services,
+      walkIn: draft?.walkIn,
     });
     navigate({ to: "/checkout" });
   };
@@ -92,7 +111,7 @@ function WashSessionPage() {
                   <div className="text-xs text-muted-foreground">Selected</div>
                   <div className="mt-1 font-medium">{customer.name}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {customer.tier} · {customer.points} pts
+                    {customer.tier} / {customer.points} pts
                   </div>
                 </div>
               </div>
@@ -222,4 +241,3 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

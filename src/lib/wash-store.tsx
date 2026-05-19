@@ -30,7 +30,8 @@ export function useWashStore() {
       };
     }),
     draft: store.sessionDraft
-      ? {
+        ? {
+          bookingId: store.sessionDraft.bookingId,
           customer: {
             id: store.sessionDraft.customerId,
             name: store.sessionDraft.customerName,
@@ -39,27 +40,35 @@ export function useWashStore() {
               store.tiers.find((tier) => tier.name === store.sessionDraft.customerTier)
                 ?.discountPercent ?? 0,
             points: store.sessionDraft.customerPoints,
+            multiplier:
+              store.tiers.find((tier) => tier.name === store.sessionDraft.customerTier)
+                ?.multiplier ?? 1,
           },
           vehicleType: store.sessionDraft.vehicleType,
           plate: store.sessionDraft.plate,
           services: store.sessionDraft.services,
+          walkIn: store.sessionDraft.walkIn,
         }
       : null,
     setDraft: (draft: {
+      bookingId?: string;
       customer: {
         id: string;
         name: string;
         tier: "Member" | "Silver" | "Gold" | "Platinum" | "Guest";
         discountPct: number;
         points: number;
+        multiplier?: number;
       };
       vehicleType: string;
       plate: string;
       services: Service[];
+      walkIn?: boolean;
     } | null) =>
       store.createOrUpdateSessionDraft(
         draft
           ? ({
+              bookingId: draft.bookingId,
               customerId: draft.customer.id,
               customerName: draft.customer.name,
               customerTier: draft.customer.tier,
@@ -67,6 +76,7 @@ export function useWashStore() {
               vehicleType: draft.vehicleType as SessionDraft["vehicleType"],
               plate: draft.plate,
               services: draft.services,
+              walkIn: draft.walkIn,
             } satisfies SessionDraft)
           : null,
       ),
