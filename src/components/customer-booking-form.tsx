@@ -14,7 +14,7 @@ import {
   useBookings,
   useCurrentVehicles,
 } from "@/lib/booking-store";
-import { formatDateISO } from "@/lib/carwash-store";
+import { formatDateISO, useCarwashStore } from "@/lib/carwash-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,11 +32,11 @@ const SLOTS = [
   "03:00 PM",
   "04:00 PM",
 ];
-const FULL_SLOTS = new Set(["10:00 AM", "03:00 PM"]);
 const ACTIVE_STATUSES: BookingStatus[] = ["Pending", "Confirmed", "Checked-in"];
 
 export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   const { addBooking, bookings } = useBookings();
+  const { customers, currentCustomerId } = useCarwashStore();
   const vehicles = useCurrentVehicles();
   const services = useAvailableServices();
   const [mounted, setMounted] = useState(false);
@@ -46,6 +46,8 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   const [slot, setSlot] = useState<string>("09:00 AM");
 
   const vehicle = vehicles.find((item) => item.id === vehicleId) ?? vehicles[0];
+  const currentCustomer = customers.find((item) => item.id === currentCustomerId);
+  const isPlatinum = currentCustomer?.tier === "Platinum";
   const selectedServices = services.filter((item) => serviceIds.includes(item.id));
   const dateISO = date ? formatDateISO(date) : "";
   const total = useMemo(
@@ -54,23 +56,32 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   );
   const blockedSlots = useMemo(() => {
     const counts = new Map<string, number>();
-    const blocked = new Set<string>(FULL_SLOTS);
+    const platinumLoads = new Set<string>();
+    const blocked = new Set<string>();
 
     bookings
       .filter((booking) => booking.dateISO === dateISO && ACTIVE_STATUSES.includes(booking.status))
       .forEach((booking) => {
-        counts.set(booking.scheduledAt.split(" ").slice(-2).join(" "), (counts.get(booking.scheduledAt.split(" ").slice(-2).join(" ")) ?? 0) + 1);
+        const timeSlot = booking.scheduledAt.split(" ").slice(-2).join(" ");
+        counts.set(timeSlot, (counts.get(timeSlot) ?? 0) + 1);
+        const bookingCustomer = customers.find((item) => item.id === booking.customerId);
+        if (bookingCustomer?.tier === "Platinum") {
+          platinumLoads.add(timeSlot);
+        }
         if (vehicle && booking.vehiclePlate === vehicle.plate) {
-          blocked.add(booking.scheduledAt.split(" ").slice(-2).join(" "));
+          blocked.add(timeSlot);
         }
       });
 
-    for (const [timeSlot, count] of counts.entries()) {
+      for (const [timeSlot, count] of counts.entries()) {
       if (count >= 3) blocked.add(timeSlot);
+      if (!isPlatinum && count >= 2 && !platinumLoads.has(timeSlot)) {
+        blocked.add(timeSlot);
+      }
     }
 
     return blocked;
-  }, [bookings, dateISO, vehicle]);
+  }, [bookings, customers, dateISO, isPlatinum, vehicle]);
   const firstAvailableSlot = SLOTS.find((item) => !blockedSlots.has(item)) ?? "";
 
   useEffect(() => {
@@ -217,20 +228,20 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">3</span>
             Pick Date & Time
           </h3>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             <div className="flex justify-center rounded-[1.2rem] border border-border/50 bg-background/50 p-4 shadow-sm">
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="w-full max-w-[280px]"
+                className="w-full max-w-sm"
                 classNames={{
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
                   day_today: "bg-accent text-accent-foreground font-bold",
                 }}
               />
             </div>
-            <div className="flex flex-col">
+            <div className="min-w-0 flex flex-col">
               <div className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 <CalIcon className="h-4 w-4 text-primary" /> Available slots
               </div>
@@ -260,6 +271,11 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
               {!firstAvailableSlot && (
                 <div className="mt-4 flex items-center gap-2 rounded-lg bg-rose-500/10 p-3 text-sm font-semibold text-rose-600 border border-rose-200/50">
                   No valid slots remain for this vehicle on the selected date.
+                </div>
+              )}
+              {!isPlatinum && (
+                <div className="mt-4 rounded-lg border border-amber-200/60 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
+                  One bay per slot is reserved for Platinum priority when not yet claimed.
                 </div>
               )}
             </div>

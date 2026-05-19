@@ -40,8 +40,16 @@ export interface Booking {
 
 export function useBookings() {
   const store = useCarwashStore();
+  const scopedBookings =
+    store.role === "Customer"
+      ? store.bookings.filter((booking) => booking.customerId === store.currentCustomerId)
+      : store.bookings;
+  const scopedTransactions =
+    store.role === "Customer"
+      ? store.transactions.filter((transaction) => transaction.customer.id === store.currentCustomerId)
+      : store.transactions;
   return {
-    bookings: store.bookings.map((booking) => ({
+    bookings: scopedBookings.map((booking) => ({
       id: booking.id,
       vehiclePlate: booking.vehiclePlate,
       vehicleName: booking.vehicleName,
@@ -66,7 +74,7 @@ export function useBookings() {
     updateStatus: store.updateBookingStatus,
     selectedBookingId: store.selectedBookingId,
     setSelectedBookingId: store.setSelectedBookingId,
-    transactions: store.transactions,
+    transactions: scopedTransactions,
   };
 }
 

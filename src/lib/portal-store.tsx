@@ -10,6 +10,9 @@ export interface Profile {
   tier: Tier;
   points: number;
   status: CustomerStatus;
+  joinedAt: string;
+  phoneVerifiedAt: string;
+  bookingSuspendedUntil?: string;
 }
 
 export function nextTierInfo(points: number, tier: Tier) {
@@ -44,12 +47,28 @@ export function usePortal() {
           tier: customer.tier,
           points: customer.points,
           status: customer.status,
+          joinedAt: customer.joinedAt,
+          phoneVerifiedAt: customer.phoneVerifiedAt,
+          bookingSuspendedUntil: customer.bookingSuspendedUntil,
         }
       : null,
     vehicles: store.vehiclesByCustomer[store.currentCustomerId] ?? [],
+    vehicleOwnershipHistory: store.vehicleOwnershipHistory.filter(
+      (entry) =>
+        entry.newCustomerId === customer?.id ||
+        entry.previousCustomerId === customer?.id ||
+        entry.newCustomerName === customer?.name ||
+        entry.previousCustomerName === customer?.name,
+    ),
     pending: store.pendingRegistration,
+    pendingPhoneChange: store.pendingPhoneChange,
     setPending: store.setPendingRegistration,
+    requestRegistrationOtp: store.requestRegistrationOtp,
+    resendRegistrationOtp: store.resendRegistrationOtp,
     completeRegistration: store.completeRegistration,
+    requestPhoneChange: store.requestPhoneChange,
+    resendPhoneChangeOtp: store.resendPhoneChangeOtp,
+    confirmPhoneChange: store.confirmPhoneChange,
     updateProfile: store.updateCurrentProfile,
     addVehicle: store.addVehicle,
     updateVehicle: store.updateVehicle,

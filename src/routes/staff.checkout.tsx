@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { canAccess } from "@/lib/access-control";
-import { useCarwashStore } from "@/lib/carwash-store";
+import { calculateCheckoutPricing, useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { fmtMoney, useWashStore } from "@/lib/wash-store";
 import { toast } from "sonner";
@@ -46,12 +46,12 @@ export function CheckoutPage() {
   const [payment, setPayment] = React.useState("card");
   const [processing, setProcessing] = React.useState(false);
 
-  if (!canAccess(role, ["Staff", "Admin"])) {
+  if (!canAccess(role, ["Staff"])) {
     return (
       <div className="mx-auto max-w-7xl p-6 md:p-10">
         <AccessDenied
           title="Checkout access is restricted"
-          description="Only Staff and Admin roles can complete payment and checkout."
+          description="Only Staff roles can complete payment and checkout."
           role={role}
         />
       </div>
@@ -73,14 +73,20 @@ export function CheckoutPage() {
 
   const subtotal = draft.services.reduce((sum, service) => sum + service.price, 0);
   const tierDiscount = Math.round(subtotal * (draft.customer.discountPct / 100));
-  const promo = promotions.find((item) => item.code === appliedPromo && item.active) ?? null;
-  const afterTier = subtotal - tierDiscount;
-  const promoDiscount = promo
-    ? promo.discountType === "Percentage"
-      ? Math.round(afterTier * (promo.amount / 100))
-      : Math.min(promo.amount, afterTier)
-    : 0;
-  const afterPromo = Math.max(0, afterTier - promoDiscount);
+  const today = new Date().toISOString().slice(0, 10);
+  const promo =
+    promotions.find(
+      (item) =>
+        item.code === appliedPromo &&
+        item.active &&
+        item.startDate <= today &&
+        item.endDate >= today,
+    ) ?? null;
+  const { effectiveTierDiscount, promoDiscount, afterPromo } = calculateCheckoutPricing({
+    subtotal,
+    tierDiscountPercent: draft.customer.discountPct,
+    promo,
+  });
   const maxRedeemableByPoints = draft.customer.points;
   const maxRedeemableByPrice = Math.floor(afterPromo / 1000);
   const maxRedeem = Math.min(maxRedeemableByPoints, maxRedeemableByPrice);
@@ -93,10 +99,12 @@ export function CheckoutPage() {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
     const matched = promotions.find(
-      (item) =>
-        item.code === code &&
-        item.active &&
-        item.tiers.includes(draft.customer.tier === "Guest" ? "Member" : draft.customer.tier),
+        (item) =>
+          item.code === code &&
+          item.active &&
+          item.startDate <= today &&
+          item.endDate >= today &&
+          item.tiers.includes(draft.customer.tier === "Guest" ? "Member" : draft.customer.tier),
     );
     if (!matched) {
       setAppliedPromo(null);
@@ -118,19 +126,25 @@ export function CheckoutPage() {
   const processPayment = () => {
     if (processing) return;
     setProcessing(true);
-    const tx = completeCheckout({
-      promoCode: appliedPromo,
-      pointsRedeemed: safePoints,
-      paymentMethod: PAYMENT_METHODS.find((item) => item.id === payment)?.label ?? payment,
-    });
-    if (!tx) {
       setProcessing(false);
-      toast.error("No active wash session available for checkout.");
-      return;
+    try {
+      const tx = completeCheckout({
+        promoCode: appliedPromo,
+        pointsRedeemed: safePoints,
+        paymentMethod: PAYMENT_METHODS.find((item) => item.id === payment)?.label ?? payment,
+      });
+      if (!tx) {
+        toast.error("No active wash session available for checkout.");
+        return;
+      }
+      toast.success(`Payment processed for ${tx.id}`);
+      setDraft(null);
+      navigate({ to: "/staff/confirmation" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to complete checkout.");
+    } finally {
+      setProcessing(false);
     }
-    toast.success(`Payment processed for ${tx.id}`);
-    setDraft(null);
-    navigate({ to: "/staff/confirmation" });
   };
 
   return (
@@ -186,7 +200,7 @@ export function CheckoutPage() {
                   </span>
                 </div>
                 <span className="text-base font-bold text-emerald-600 self-end sm:self-auto">
-                  -{fmtMoney(tierDiscount)}
+                  -{fmtMoney(effectiveTierDiscount)}
                 </span>
               </div>
             )}
@@ -310,10 +324,10 @@ export function CheckoutPage() {
             <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/50 pb-4 mb-6">Final Bill</div>
             <div className="space-y-4 text-sm">
               <Row label="Subtotal" value={fmtMoney(subtotal)} />
-              {tierDiscount > 0 && (
+              {effectiveTierDiscount > 0 && (
                 <Row
                   label={`Tier (-${draft.customer.discountPct}%)`}
-                  value={`-${fmtMoney(tierDiscount)}`}
+                  value={`-${fmtMoney(effectiveTierDiscount)}`}
                   emerald
                 />
               )}

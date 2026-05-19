@@ -18,6 +18,10 @@ export const GUEST = {
 
 export function useWashStore() {
   const store = useCarwashStore();
+  const visibleTransactions =
+    store.role === "Customer"
+      ? store.transactions.filter((transaction) => transaction.customer.id === store.currentCustomerId)
+      : store.transactions;
   return {
     customers: store.customers.map((customer) => {
       const rule = store.tiers.find((tier) => tier.name === customer.tier);
@@ -68,7 +72,10 @@ export function useWashStore() {
       store.createOrUpdateSessionDraft(
         draft
           ? ({
+              sessionId: store.sessionDraft?.sessionId ?? "",
               bookingId: draft.bookingId,
+              staffId: store.sessionDraft?.staffId ?? "",
+              staffName: store.sessionDraft?.staffName ?? "",
               customerId: draft.customer.id,
               customerName: draft.customer.name,
               customerTier: draft.customer.tier,
@@ -81,7 +88,7 @@ export function useWashStore() {
           : null,
       ),
     lastTransaction: store.lastTransaction,
-    transactions: store.transactions,
+    transactions: visibleTransactions,
     promotions: store.promotions,
     servicesCatalog: store.services,
     completeCheckout: store.completeCheckout,

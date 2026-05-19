@@ -102,7 +102,7 @@ export function AppShell({ role }: { role: Role }) {
   const store = useCarwashStore();
   const currentCustomer = store.customers.find((c) => c.id === store.currentCustomerId);
   const profileName = role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
-  const profileTier = role === "Customer" && currentCustomer ? currentCustomer.tier : "Admin";
+  const profileTag = role === "Customer" && currentCustomer ? `${currentCustomer.tier} Member` : `${role} Workspace`;
 
   let headerTitle = "Overview";
   let headerSubtitle = "Manage your car wash activities";
@@ -318,7 +318,7 @@ export function AppShell({ role }: { role: Role }) {
                 <div className="hidden sm:block">
                   <div className="text-sm font-bold text-foreground leading-tight">{profileName}</div>
                   <div className="mt-1 inline-flex rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[11px] font-bold text-indigo-600 leading-none">
-                    {profileTier} Member
+                    {profileTag}
                   </div>
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block transition-transform group-hover:translate-y-0.5 cursor-pointer" />

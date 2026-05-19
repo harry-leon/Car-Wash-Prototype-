@@ -37,6 +37,9 @@ function PromotionsPage() {
   const [discountType, setDiscountType] = React.useState<"Percentage" | "Flat">("Percentage");
   const [amount, setAmount] = React.useState(10);
   const [tiers, setTiers] = React.useState<TierName[]>(["Gold"]);
+  const [startDate, setStartDate] = React.useState("2026-05-19");
+  const [endDate, setEndDate] = React.useState("2026-12-31");
+  const [stackable, setStackable] = React.useState(false);
 
   if (!canAccess(role, ["Admin"])) {
     return (
@@ -71,6 +74,9 @@ function PromotionsPage() {
       amount,
       tiers,
       active: true,
+      startDate,
+      endDate,
+      stackable,
     });
     toast.success(`Promotion ${code.toUpperCase()} launched`, {
       description: `Targeting ${tiers.join(", ")}`,
@@ -78,6 +84,7 @@ function PromotionsPage() {
     setCode("");
     setAmount(10);
     setTiers(["Gold"]);
+    setStackable(false);
   };
 
   return (
@@ -134,6 +141,25 @@ function PromotionsPage() {
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date</Label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30" />
+                  </div>
+                </div>
+
+                <label className="flex items-center justify-between rounded-xl border border-border/50 bg-background/30 p-4">
+                  <div>
+                    <div className="text-sm font-bold">Stack With Tier Discount</div>
+                    <div className="text-xs text-muted-foreground">If off, checkout uses the higher discount only.</div>
+                  </div>
+                  <Switch checked={stackable} onCheckedChange={setStackable} className="data-[state=checked]:bg-emerald-500" />
+                </label>
 
                 <div className="space-y-3">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Tiers</Label>

@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { GuestLayout } from "@/components/guest-layout";
-import { GuestOnly } from "@/components/route-guards";
 import { Button } from "@/components/ui/button";
 import { getHomePath } from "@/lib/auth";
 import { useCarwashStore } from "@/lib/carwash-store";
@@ -17,22 +16,39 @@ export const Route = createFileRoute("/verify")({
 const LENGTH = 6;
 
 export function VerifyPage() {
-  const { pending, completeRegistration } = usePortal();
+  const {
+    pending,
+    pendingPhoneChange,
+    completeRegistration,
+    confirmPhoneChange,
+    resendRegistrationOtp,
+    resendPhoneChangeOtp,
+  } = usePortal();
   const navigate = useNavigate();
   const { loginAs } = useCarwashStore();
   const [digits, setDigits] = React.useState<string[]>(Array(LENGTH).fill(""));
-  const [seconds, setSeconds] = React.useState(60);
+  const [secondsLeft, setSecondsLeft] = React.useState(60);
   const [verifying, setVerifying] = React.useState(false);
   const refs = React.useRef<(HTMLInputElement | null)[]>([]);
 
   React.useEffect(() => {
-    if (seconds === 0) return;
-    const timer = setInterval(() => setSeconds((value) => (value > 0 ? value - 1 : 0)), 1000);
+    const source = pending ?? pendingPhoneChange;
+    if (!source) return;
+    const syncTimer = () => {
+      const nextSecondsLeft = Math.max(
+        0,
+        Math.ceil((new Date(source.otpExpiresAt).getTime() - Date.now()) / 1000),
+      );
+      setSecondsLeft(nextSecondsLeft);
+    };
+    syncTimer();
+    const timer = setInterval(syncTimer, 1000);
     return () => clearInterval(timer);
-  }, [seconds]);
+  }, [pending, pendingPhoneChange]);
 
   const code = digits.join("");
-  const ready = code.length === LENGTH && digits.every((digit) => digit !== "");
+  const expired = secondsLeft === 0;
+  const ready = code.length === LENGTH && digits.every((digit) => digit !== "") && !expired;
 
   const handleChange = (index: number, value: string) => {
     const nextDigit = value.replace(/\D/g, "").slice(-1);
@@ -78,9 +94,12 @@ export function VerifyPage() {
 
     try {
       if (pending) {
-        completeRegistration();
+        completeRegistration(code);
         loginAs("Customer");
         toast.success("Phone verified - welcome aboard!");
+      } else if (pendingPhoneChange) {
+        confirmPhoneChange(code);
+        toast.success("Phone number updated and verified.");
       } else {
         toast.success("Phone verified");
       }
@@ -93,22 +112,36 @@ export function VerifyPage() {
   };
 
   const handleResend = () => {
-    setSeconds(60);
-    setDigits(Array(LENGTH).fill(""));
-    refs.current[0]?.focus();
-    toast("New verification code sent");
+    try {
+      if (pending) {
+        resendRegistrationOtp();
+      } else if (pendingPhoneChange) {
+        resendPhoneChangeOtp();
+      } else {
+        return;
+      }
+      setSecondsLeft(60);
+      setDigits(Array(LENGTH).fill(""));
+      refs.current[0]?.focus();
+      toast("New verification code sent");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to resend OTP.");
+    }
   };
 
   const masked = pending
     ? `${pending.countryCode} ${pending.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1***$3")}`
+    : pendingPhoneChange
+      ? `${pendingPhoneChange.countryCode} ${pendingPhoneChange.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1***$3")}`
     : "your phone";
+  const activeChallenge = pending ?? pendingPhoneChange;
+  const expiresAt = activeChallenge ? new Date(activeChallenge.otpExpiresAt) : null;
 
   return (
-    <GuestOnly>
-      <GuestLayout
-        title="Verify your number"
-        description="Confirm the 6-digit OTP to activate the new customer account."
-      >
+    <GuestLayout
+      title="Verify your number"
+      description="Confirm the 6-digit OTP to activate the new customer account."
+    >
         <div className="mx-auto w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
           <div className="flex items-center justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -142,9 +175,9 @@ export function VerifyPage() {
           </div>
 
           <div className="mt-5 text-center text-sm text-muted-foreground">
-            {seconds > 0 ? (
+            {secondsLeft > 0 ? (
               <>
-                Resend code in <span className="font-medium text-foreground">{seconds}s</span>
+                OTP expires in <span className="font-medium text-foreground">{secondsLeft}s</span>
               </>
             ) : (
               <button
@@ -181,11 +214,13 @@ export function VerifyPage() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back to registration
             </Link>
           </div>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Tip: any 6-digit code works in this prototype.
-          </p>
+          {expiresAt && (
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Code expires at <strong>{expiresAt.toLocaleTimeString()}</strong>. Prototype OTP: use{" "}
+              <strong>{activeChallenge?.otpCode}</strong>.
+            </p>
+          )}
         </div>
       </GuestLayout>
-    </GuestOnly>
   );
 }

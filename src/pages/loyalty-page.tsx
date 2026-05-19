@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { canAccess } from "@/lib/access-control";
-import { useCarwashStore } from "@/lib/carwash-store";
+import { getPointSnapshotForCustomer, useCarwashStore } from "@/lib/carwash-store";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useLoyalty, tierGradient, tierBadgeClass, Reward } from "@/lib/loyalty-store";
@@ -54,6 +54,7 @@ export function LoyaltyPage() {
     ? Math.min(100, Math.round(((customer.points - base) / (target - base)) * 100))
     : 100;
   const customerLedger = ledger.filter((item) => item.customerId === customer.id);
+  const pointSnapshot = getPointSnapshotForCustomer(ledger, customer.id);
 
   const handleRedeem = (reward: Reward) => {
     if (customer.points < reward.cost) {
@@ -90,7 +91,7 @@ export function LoyaltyPage() {
                 <Crown className="h-3.5 w-3.5" /> MEMBER
               </div>
               <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">{customer.tier} Member</div>
-              <div className="mt-1 text-xs font-medium text-white/70">Since 15/02/2025</div>
+              <div className="mt-1 text-xs font-medium text-white/70">Since {new Date("2025-02-15").toLocaleDateString("en-GB")}</div>
             </div>
 
             {/* Col 2 */}
@@ -114,8 +115,14 @@ export function LoyaltyPage() {
             {/* Col 4 */}
             <div className="flex-1 lg:pl-6">
               <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">POINTS EXPIRY</div>
-              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">31/12/2026</div>
-              <div className="mt-1 text-xs font-medium text-white/70">138 days left</div>
+                <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">
+                  {pointSnapshot.nextExpiryDate ? new Date(pointSnapshot.nextExpiryDate).toLocaleDateString("en-GB") : "No expiry"}
+                </div>
+                <div className="mt-1 text-xs font-medium text-white/70">
+                  {pointSnapshot.nextExpiryDate
+                    ? `${pointSnapshot.expiringIn30Days.toLocaleString()} pts within 30 days`
+                    : "No points close to expiry"}
+                </div>
             </div>
           </div>
 

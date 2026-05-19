@@ -22,7 +22,7 @@ const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }
 };
 
 export function RegisterPage() {
-  const { setPending, pending } = usePortal();
+  const { requestRegistrationOtp, pending } = usePortal();
   const navigate = useNavigate();
   const [name, setName] = React.useState(pending?.name ?? "");
   const [countryCode, setCountryCode] = React.useState(pending?.countryCode ?? "+84");
@@ -41,15 +41,20 @@ export function RegisterPage() {
 
     setSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
-    setPending({
-      name: name.trim(),
-      phone: phone.trim(),
-      countryCode,
-      vehicle: { brandModel: brandModel.trim(), plate: plate.trim().toUpperCase(), type },
-    });
-    setSubmitting(false);
-    toast.success("Verification code sent!");
-    navigate({ to: "/verify" });
+    try {
+      requestRegistrationOtp({
+        name: name.trim(),
+        phone: phone.trim(),
+        countryCode,
+        vehicle: { brandModel: brandModel.trim(), plate: plate.trim().toUpperCase(), type },
+      });
+      toast.success("Verification code sent!");
+      navigate({ to: "/verify" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to send verification code.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

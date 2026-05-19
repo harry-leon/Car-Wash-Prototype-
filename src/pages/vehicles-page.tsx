@@ -50,7 +50,7 @@ const TYPE_COLORS: Record<VehicleType, string> = {
 };
 
 export function VehiclesPage() {
-  const { vehicles, addVehicle, updateVehicle, deleteVehicle } = usePortal();
+  const { vehicles, vehicleOwnershipHistory, addVehicle, updateVehicle, deleteVehicle } = usePortal();
   const [editing, setEditing] = React.useState<Vehicle | "new" | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
 
@@ -138,6 +138,29 @@ export function VehiclesPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {vehicleOwnershipHistory.length > 0 && (
+          <div className="mt-10 rounded-[1.5rem] border border-border/60 bg-card/50 p-6 shadow-sm">
+            <h2 className="text-lg font-bold tracking-tight text-foreground">Ownership history</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Recorded plate transfer and reassignment events.</p>
+            <div className="mt-5 space-y-3">
+              {vehicleOwnershipHistory.map((entry) => (
+                <div key={entry.id} className="rounded-xl border border-border/50 bg-background/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-mono text-sm font-bold text-primary">{entry.plate}</div>
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      {new Date(entry.transferredAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-sm font-medium text-foreground">
+                    {entry.previousCustomerName} {"->"} {entry.newCustomerName}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">{entry.note}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

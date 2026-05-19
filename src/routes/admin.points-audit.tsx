@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/admin/points-audit")({
 });
 
 function AuditPage() {
-  const { role, adjustments, addAdjustment } = useAppStore();
+  const { role, customers, adjustments, addAdjustment } = useAppStore();
 
   if (!canAccess(role, ["Admin"])) {
     return (
@@ -53,7 +54,7 @@ function AuditPage() {
               Immutable ledger of manual point corrections issued by authorized personnel.
             </p>
           </div>
-          <AdjustDialog onSubmit={addAdjustment} />
+          <AdjustDialog customers={customers} onSubmit={addAdjustment} />
         </div>
 
         <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-xl overflow-hidden">
@@ -91,7 +92,7 @@ function AuditPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 align-top text-sm font-medium">{a.executive}</td>
-                    <td className="px-6 py-4 align-top text-sm font-bold">{a.customer}</td>
+                    <td className="px-6 py-4 align-top text-sm font-bold">{a.customerName}</td>
                     <td className="px-6 py-4 align-top">
                       <span
                         className={cn(
@@ -106,7 +107,10 @@ function AuditPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 align-top text-sm font-medium text-muted-foreground">
-                      {a.reason}
+                      <div>{a.reason}</div>
+                      <div className="mt-1 text-xs">
+                        {a.previousBalance} {"->"} {a.nextBalance} pts
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -120,26 +124,28 @@ function AuditPage() {
 }
 
 function AdjustDialog({
+  customers,
   onSubmit,
 }: {
-  onSubmit: (a: { executive: string; customer: string; delta: number; reason: string }) => void;
+  customers: Array<{ id: string; name: string; points: number }>;
+  onSubmit: (a: { executive: string; customerId: string; delta: number; reason: string }) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [customer, setCustomer] = useState("");
+  const [customerId, setCustomerId] = useState("");
   const [delta, setDelta] = useState("");
   const [reason, setReason] = useState("");
 
   const submit = () => {
     const n = parseInt(delta, 10);
-    if (!customer || !reason || Number.isNaN(n)) return;
+    if (!customerId || !reason || Number.isNaN(n) || n === 0) return;
     onSubmit({
       executive: "Marcus Lin (Ops Manager)",
-      customer,
+      customerId,
       delta: n,
       reason,
     });
     setOpen(false);
-    setCustomer("");
+    setCustomerId("");
     setDelta("");
     setReason("");
   };
@@ -161,14 +167,19 @@ function AdjustDialog({
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <div className="space-y-2">
-            <Label htmlFor="customer" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Customer</Label>
-            <Input
-              id="customer"
-              placeholder="e.g. Jane Smith"
-              value={customer}
-              onChange={(e) => setCustomer(e.target.value)}
-              className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30"
-            />
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Customer</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30">
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/50">
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id} className="rounded-lg font-medium">
+                    {customer.name} ({customer.points} pts)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="delta" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Adjustment (positive or negative)</Label>

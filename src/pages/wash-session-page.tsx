@@ -42,12 +42,12 @@ export function WashSessionPage() {
   const services = serviceCatalog.filter((service) => selectedServices.includes(service.id));
   const subtotal = services.reduce((sum, service) => sum + service.price, 0);
 
-  if (!canAccess(role, ["Staff", "Admin"])) {
+  if (!canAccess(role, ["Staff"])) {
     return (
       <div className="p-6 md:p-10">
         <AccessDenied
           title="Wash session access is restricted"
-          description="Only Staff and Admin roles can prepare a wash session."
+          description="Only Staff roles can prepare a wash session."
           role={role}
         />
       </div>

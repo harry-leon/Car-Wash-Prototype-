@@ -1,5 +1,5 @@
 import * as React from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Crown, Loader2, Sparkles, TrendingUp, User, Phone, Mail, Calendar, ShieldCheck, MessageSquare, History, Edit2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,8 @@ const TIER_GRADIENT: Record<string, string> = {
 };
 
 export function ProfilePage() {
-  const { profile, updateProfile } = usePortal();
+  const { profile, updateProfile, requestPhoneChange } = usePortal();
+  const navigate = useNavigate();
   const [name, setName] = React.useState(profile?.name ?? "");
   const [email, setEmail] = React.useState(profile?.email ?? "");
   const [phone, setPhone] = React.useState(profile?.phone ?? "");
@@ -55,15 +56,22 @@ export function ProfilePage() {
     if (!email.trim() || !email.includes("@")) {
       return toast.error("Please enter a valid email address");
     }
-    if (!/^\d{8,11}$/.test(phone.trim())) {
-      return toast.error("Phone must be 8-11 digits");
-    }
     setSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 600));
-    updateProfile({ name: name.trim(), email: email.trim(), phone: phone.trim(), countryCode, status });
+    updateProfile({ name: name.trim(), email: email.trim(), status });
     setSaving(false);
     setIsEditing(false);
     toast.success("Profile updated");
+  };
+
+  const handlePhoneChange = () => {
+    try {
+      requestPhoneChange({ phone: phone.trim(), countryCode });
+      toast.success("OTP sent to the new phone number.");
+      navigate({ to: "/verify" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to request phone verification.");
+    }
   };
 
   return (
@@ -78,6 +86,17 @@ export function ProfilePage() {
                   <Edit2 className="h-3.5 w-3.5" />
                   Edit
                 </Button>
+                {profile.bookingSuspendedUntil && (
+                  <div className="flex items-center justify-between py-4">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="text-sm font-medium">Booking Suspension</span>
+                    </div>
+                    <div className="text-sm font-semibold text-foreground">
+                      Until {new Date(profile.bookingSuspendedUntil).toLocaleDateString()}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="mb-6">
@@ -127,7 +146,7 @@ export function ProfilePage() {
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm font-medium">Joined Date</span>
                   </div>
-                  <div className="text-sm font-semibold text-foreground">15 Feb 2025</div>
+                  <div className="text-sm font-semibold text-foreground">{new Date(profile.joinedAt).toLocaleDateString()}</div>
                 </div>
 
                 <div className="flex items-center justify-between py-4">
@@ -187,9 +206,6 @@ export function ProfilePage() {
                       className="h-12 rounded-xl border border-border/60 bg-background/50 px-3 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30 font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       <option value="+84">+84</option>
-                      <option value="+1">+1</option>
-                      <option value="+44">+44</option>
-                      <option value="+65">+65</option>
                     </select>
                     <Input
                       id="pphone"
@@ -199,7 +215,11 @@ export function ProfilePage() {
                       disabled={!isEditing}
                       className="h-12 flex-1 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 focus-visible:border-primary font-medium tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
                     />
+                    <Button type="button" variant="outline" onClick={handlePhoneChange} className="h-12 rounded-xl font-bold">
+                      Verify
+                    </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">Phone changes require OTP verification before activation.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pemail" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

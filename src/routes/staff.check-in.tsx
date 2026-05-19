@@ -11,12 +11,12 @@ export const Route = createFileRoute("/staff/check-in")({
 export function StaffCheckInPage() {
   const { role } = useCarwashStore();
 
-  if (!canAccess(role, ["Staff", "Admin"])) {
+  if (!canAccess(role, ["Staff"])) {
     return (
       <div className="p-6 md:p-10">
         <AccessDenied
           title="Check-in access is restricted"
-          description="Only Staff and Admin roles can process arrivals and walk-ins."
+          description="Only Staff roles can process arrivals and walk-ins."
           role={role}
         />
       </div>

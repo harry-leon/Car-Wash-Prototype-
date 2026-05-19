@@ -1,18 +1,43 @@
 import { useCarwashStore, Reward, Tier, TierRule } from "@/lib/carwash-store";
 
 export type TierName = Tier;
-export type { Reward };
+export type { Reward, TierRule };
 
 export function useLoyalty() {
   const store = useCarwashStore();
+  const visibleCustomers =
+    store.role === "Customer"
+      ? store.customers.filter((customer) => customer.id === store.currentCustomerId)
+      : store.customers;
+  const visibleLedger =
+    store.role === "Customer"
+      ? store.ledger.filter((entry) => entry.customerId === store.currentCustomerId)
+      : store.ledger;
+  const visiblePromotions =
+    store.role === "Customer"
+      ? store.promotions.filter((promotion) => {
+          const customer = store.customers.find((item) => item.id === store.currentCustomerId);
+          if (!customer) return false;
+          const today = new Date().toISOString().slice(0, 10);
+          return (
+            promotion.active &&
+            promotion.startDate <= today &&
+            promotion.endDate >= today &&
+            promotion.tiers.includes(customer.tier)
+          );
+        })
+      : store.promotions;
   return {
     tiers: store.tiers.map((tier) => ({
       name: tier.name,
       threshold: tier.minPoints,
+      minPoints: tier.minPoints,
+      bookingWindowDays: tier.bookingWindowDays,
+      discountPercent: tier.discountPercent,
       multiplier: tier.multiplier,
       perks: tier.perks,
     })),
-    customers: store.customers.map((customer) => ({
+    customers: visibleCustomers.map((customer) => ({
       id: customer.id,
       name: customer.name,
       email: customer.email,
@@ -20,22 +45,30 @@ export function useLoyalty() {
       tier: customer.tier,
     })),
     rewards: store.rewards,
-    ledger: store.ledger,
-    promotions: store.promotions,
+    ledger: visibleLedger,
+    promotions: visiblePromotions,
     audit: store.tierHistory,
     activeCustomerId: store.currentCustomerId,
     setActiveCustomerId: store.setCurrentCustomerId,
-    updateTiers: (next: Array<{ name: TierName; threshold: number; multiplier: number; perks: string }>) =>
+    updateTiers: (next: Array<{
+      name: TierName;
+      threshold: number;
+      minPoints?: number;
+      bookingWindowDays?: number;
+      discountPercent?: number;
+      multiplier: number;
+      perks: string;
+    }>) =>
       store.updateTiers(
         next.map((tier) => {
           const current = store.tiers.find((item) => item.name === tier.name);
           return {
             name: tier.name,
-            minPoints: tier.threshold,
+            minPoints: tier.minPoints ?? tier.threshold,
             multiplier: tier.multiplier,
             perks: tier.perks,
-            bookingWindowDays: current?.bookingWindowDays ?? 7,
-            discountPercent: current?.discountPercent ?? 0,
+            bookingWindowDays: tier.bookingWindowDays ?? current?.bookingWindowDays ?? 7,
+            discountPercent: tier.discountPercent ?? current?.discountPercent ?? 0,
           };
         }) satisfies TierRule[],
       ),
@@ -46,13 +79,11 @@ export function useLoyalty() {
       amount: number;
       tiers: TierName[];
       active: boolean;
+      startDate: string;
+      endDate: string;
+      stackable: boolean;
     }) =>
-      store.addPromotion({
-        ...promotion,
-        startDate: "2026-05-18",
-        endDate: "2026-12-31",
-        stackable: false,
-      }),
+      store.addPromotion(promotion),
     togglePromotion: store.togglePromotion,
     computeTier: (points: number) =>
       [...store.tiers].sort((a, b) => b.minPoints - a.minPoints).find((tier) => points >= tier.minPoints)?.name ?? "Member",

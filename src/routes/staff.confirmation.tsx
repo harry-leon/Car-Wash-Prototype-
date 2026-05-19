@@ -21,12 +21,12 @@ export function ConfirmationPage() {
   const { lastTransaction, customers } = useWashStore();
   const navigate = useNavigate();
 
-  if (!canAccess(role, ["Staff", "Admin"])) {
+  if (!canAccess(role, ["Staff"])) {
     return (
       <div className="p-6 md:p-10">
         <AccessDenied
           title="Confirmation access is restricted"
-          description="Only Staff and Admin roles can view the checkout confirmation screen."
+          description="Only Staff roles can view the checkout confirmation screen."
           role={role}
         />
       </div>
@@ -155,7 +155,7 @@ export function ConfirmationPage() {
               Back to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button variant="outline" className="w-full h-12 rounded-xl font-bold border-border/50 hover:bg-background shadow-sm transition-all" asChild>
-              <Link to="/customer/transactions">View History</Link>
+              <Link to="/staff/dashboard">Start another wash</Link>
             </Button>
           </div>
         </div>

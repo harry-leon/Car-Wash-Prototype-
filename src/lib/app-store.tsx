@@ -7,6 +7,11 @@ export function useAppStore() {
   return {
     role: store.role,
     setRole: (role: Role) => store.setRole(role),
+    customers: store.customers.map((customer) => ({
+      id: customer.id,
+      name: customer.name,
+      points: customer.points,
+    })),
     notifications: store.notifications,
     pushNotification: store.pushNotification,
     adjustments: store.adjustments,

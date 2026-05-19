@@ -66,6 +66,12 @@ function TierRulesPage() {
       if (t.threshold < 0) {
         return toast.error(`${t.name}: threshold must be >= 0`);
       }
+      if (t.bookingWindowDays < 1) {
+        return toast.error(`${t.name}: booking window must be at least 1 day`);
+      }
+      if (t.discountPercent < 0 || t.discountPercent > 100) {
+        return toast.error(`${t.name}: discount percent must be between 0 and 100`);
+      }
       if (t.multiplier <= 0) {
         return toast.error(`${t.name}: multiplier must be > 0`);
       }
@@ -75,7 +81,7 @@ function TierRulesPage() {
     }
     updateTiers(draft);
     toast.success("Tier rules updated", {
-      description: "Customer tiers re-evaluated across the system.",
+      description: "Rules are staged and will apply on the next monthly review cycle.",
     });
   };
 
@@ -86,7 +92,7 @@ function TierRulesPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Tier Rules Configuration</h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Adjust thresholds and accrual multipliers. Changes apply instantly to all customers.
+              Adjust thresholds and accrual multipliers. Changes are staged for the next monthly tier review.
             </p>
           </div>
           <Button onClick={handleSave} size="lg" className="rounded-xl shadow-lg shadow-primary/20 font-bold hover:shadow-xl hover:-translate-y-0.5 transition-all">
@@ -145,6 +151,32 @@ function TierRulesPage() {
                           className="h-11 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 font-semibold text-lg text-primary text-center w-24"
                         />
                         <span className="text-lg font-bold text-muted-foreground">x</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Booking Window (Days)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={t.bookingWindowDays}
+                        onChange={(e) => update(i, { bookingWindowDays: Number(e.target.value) })}
+                        className="h-11 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tier Discount Percent</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={t.discountPercent}
+                          onChange={(e) => update(i, { discountPercent: Number(e.target.value) })}
+                          className="h-11 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 font-semibold text-lg text-primary text-center w-24"
+                        />
+                        <span className="text-lg font-bold text-muted-foreground">%</span>
                       </div>
                     </div>
 
