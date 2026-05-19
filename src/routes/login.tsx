@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck, User, Wrench } from "lucide-react";
+import { ArrowRight, LockKeyhole, Phone, ShieldCheck, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { GuestLayout } from "@/components/guest-layout";
 import { GuestOnly } from "@/components/route-guards";
@@ -24,14 +24,15 @@ const LOGIN_ROLES: { role: Role; icon: React.ElementType; label: string }[] = [
 function LoginPage() {
   const navigate = useNavigate();
   const { loginAs } = useCarwashStore();
-  const [email, setEmail] = React.useState("demo@autowash.pro");
+  const [phone, setPhone] = React.useState("0901234567");
   const [password, setPassword] = React.useState("password123");
   const [role, setRole] = React.useState<Role>("Customer");
   const [submitting, setSubmitting] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!email.trim()) return toast.error("Email is required.");
+    if (!phone.trim()) return toast.error("Phone number is required.");
+    if (!/^0\d{9}$/.test(phone.trim())) return toast.error("Phone must follow Vietnamese format (e.g. 0901234567).");
     if (!password.trim()) return toast.error("Password is required.");
 
     setSubmitting(true);
@@ -58,20 +59,20 @@ function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Phone Number
               </Label>
               <div className="relative group">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                  <Mail className="h-4 w-4" />
+                  <Phone className="h-4 w-4" />
                 </div>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))}
                   className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
-                  placeholder="you@example.com"
+                  placeholder="0901234567"
                 />
               </div>
             </div>
