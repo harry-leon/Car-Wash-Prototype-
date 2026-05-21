@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  BarChart3,
   Bell,
   CarFront,
   ChevronDown,
@@ -12,9 +13,9 @@ import {
   Phone,
   ReceiptText,
   Settings2,
-  ShieldCheck,
   Sparkles,
   UserRound,
+  Users,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -68,12 +69,12 @@ const ADMIN_NAV: NavGroup[] = [
     label: "Admin",
     items: [
       { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { to: "/admin/analytics", label: "Analytics", icon: LayoutDashboard },
-      { to: "/admin/tiers", label: "Tier Rules", icon: Settings2 },
+      { to: "/admin/bookings", label: "Bookings", icon: ClipboardList },
+      { to: "/admin/customers", label: "Customers", icon: Users },
+      { to: "/admin/loyalty", label: "Loyalty", icon: Gift },
       { to: "/admin/promotions", label: "Promotions", icon: Sparkles },
-      { to: "/admin/tier-history", label: "Tier History", icon: ShieldCheck },
-      { to: "/admin/points-audit", label: "Points Audit", icon: ShieldCheck },
-      { to: "/admin/rbac", label: "RBAC", icon: ShieldCheck },
+      { to: "/admin/reports", label: "Reports", icon: BarChart3 },
+      { to: "/admin/settings", label: "Settings", icon: Settings2 },
     ],
   },
 ];

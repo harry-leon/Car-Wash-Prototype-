@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { Suspense, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 
@@ -13,6 +13,14 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <RouterProvider router={getRouter()} />
+    <Suspense
+      fallback={
+        <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">
+          Loading application...
+        </div>
+      }
+    >
+      <RouterProvider router={getRouter()} />
+    </Suspense>
   </StrictMode>,
 );

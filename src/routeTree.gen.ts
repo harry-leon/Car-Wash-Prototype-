@@ -42,14 +42,20 @@ import { Route as BookingsTrackerRouteImport } from './routes/bookings.tracker'
 import { Route as BookingsNewRouteImport } from './routes/bookings.new'
 import { Route as AdminTiersRouteImport } from './routes/admin.tiers'
 import { Route as AdminTierHistoryRouteImport } from './routes/admin.tier-history'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminRbacRouteImport } from './routes/admin.rbac'
 import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
 import { Route as AdminPointsAuditRouteImport } from './routes/admin.points-audit'
+import { Route as AdminLoyaltyRouteImport } from './routes/admin.loyalty'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as StaffCheckinIdRouteImport } from './routes/staff.checkin.$id'
 import { Route as CustomerBookingsTrackerRouteImport } from './routes/customer.bookings.tracker'
 import { Route as CustomerBookingsNewRouteImport } from './routes/customer.bookings.new'
+import { Route as AdminCustomersIdRouteImport } from './routes/admin.customers.$id'
 
 const WashSessionRoute = WashSessionRouteImport.update({
   id: '/wash-session',
@@ -216,6 +222,16 @@ const AdminTierHistoryRoute = AdminTierHistoryRouteImport.update({
   path: '/tier-history',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminRbacRoute = AdminRbacRouteImport.update({
   id: '/rbac',
   path: '/rbac',
@@ -231,9 +247,24 @@ const AdminPointsAuditRoute = AdminPointsAuditRouteImport.update({
   path: '/points-audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLoyaltyRoute = AdminLoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsRoute = AdminBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -256,6 +287,11 @@ const CustomerBookingsNewRoute = CustomerBookingsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => CustomerBookingsRoute,
 } as any)
+const AdminCustomersIdRoute = AdminCustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCustomersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -275,10 +311,15 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/loyalty': typeof AdminLoyaltyRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/tier-history': typeof AdminTierHistoryRoute
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
@@ -296,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
@@ -318,10 +360,15 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/loyalty': typeof AdminLoyaltyRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/tier-history': typeof AdminTierHistoryRoute
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
@@ -339,6 +386,7 @@ export interface FileRoutesByTo {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
@@ -362,10 +410,15 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/wash-session': typeof WashSessionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/loyalty': typeof AdminLoyaltyRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/tier-history': typeof AdminTierHistoryRoute
   '/admin/tiers': typeof AdminTiersRoute
   '/bookings/new': typeof BookingsNewRoute
@@ -383,6 +436,7 @@ export interface FileRoutesById {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
@@ -407,10 +461,15 @@ export interface FileRouteTypes {
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/customers'
     | '/admin/dashboard'
+    | '/admin/loyalty'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
+    | '/admin/reports'
+    | '/admin/settings'
     | '/admin/tier-history'
     | '/admin/tiers'
     | '/bookings/new'
@@ -428,6 +487,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/operations'
     | '/staff/wash-session'
+    | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
     | '/staff/checkin/$id'
@@ -450,10 +510,15 @@ export interface FileRouteTypes {
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/customers'
     | '/admin/dashboard'
+    | '/admin/loyalty'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
+    | '/admin/reports'
+    | '/admin/settings'
     | '/admin/tier-history'
     | '/admin/tiers'
     | '/bookings/new'
@@ -471,6 +536,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/operations'
     | '/staff/wash-session'
+    | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
     | '/staff/checkin/$id'
@@ -493,10 +559,15 @@ export interface FileRouteTypes {
     | '/verify'
     | '/wash-session'
     | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/customers'
     | '/admin/dashboard'
+    | '/admin/loyalty'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
+    | '/admin/reports'
+    | '/admin/settings'
     | '/admin/tier-history'
     | '/admin/tiers'
     | '/bookings/new'
@@ -514,6 +585,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/operations'
     | '/staff/wash-session'
+    | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
     | '/staff/checkin/$id'
@@ -771,6 +843,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTierHistoryRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/rbac': {
       id: '/admin/rbac'
       path: '/rbac'
@@ -792,11 +878,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPointsAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/loyalty': {
+      id: '/admin/loyalty'
+      path: '/loyalty'
+      fullPath: '/admin/loyalty'
+      preLoaderRoute: typeof AdminLoyaltyRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings': {
+      id: '/admin/bookings'
+      path: '/bookings'
+      fullPath: '/admin/bookings'
+      preLoaderRoute: typeof AdminBookingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/analytics': {
@@ -827,25 +934,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerBookingsNewRouteImport
       parentRoute: typeof CustomerBookingsRoute
     }
+    '/admin/customers/$id': {
+      id: '/admin/customers/$id'
+      path: '/$id'
+      fullPath: '/admin/customers/$id'
+      preLoaderRoute: typeof AdminCustomersIdRouteImport
+      parentRoute: typeof AdminCustomersRoute
+    }
   }
 }
 
+interface AdminCustomersRouteChildren {
+  AdminCustomersIdRoute: typeof AdminCustomersIdRoute
+}
+
+const AdminCustomersRouteChildren: AdminCustomersRouteChildren = {
+  AdminCustomersIdRoute: AdminCustomersIdRoute,
+}
+
+const AdminCustomersRouteWithChildren = AdminCustomersRoute._addFileChildren(
+  AdminCustomersRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminCustomersRoute: typeof AdminCustomersRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLoyaltyRoute: typeof AdminLoyaltyRoute
   AdminPointsAuditRoute: typeof AdminPointsAuditRoute
   AdminPromotionsRoute: typeof AdminPromotionsRoute
   AdminRbacRoute: typeof AdminRbacRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTierHistoryRoute: typeof AdminTierHistoryRoute
   AdminTiersRoute: typeof AdminTiersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminBookingsRoute: AdminBookingsRoute,
+  AdminCustomersRoute: AdminCustomersRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminLoyaltyRoute: AdminLoyaltyRoute,
   AdminPointsAuditRoute: AdminPointsAuditRoute,
   AdminPromotionsRoute: AdminPromotionsRoute,
   AdminRbacRoute: AdminRbacRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminTierHistoryRoute: AdminTierHistoryRoute,
   AdminTiersRoute: AdminTiersRoute,
 }
