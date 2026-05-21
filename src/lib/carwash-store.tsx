@@ -276,6 +276,7 @@ interface PersistedStore {
 interface Store {
   role: Role;
   isAuthenticated: boolean;
+  hydrated: boolean;
   setRole: (role: Role) => void;
   loginAs: (role: Role) => void;
   logout: () => void;
@@ -953,10 +954,11 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
 
     setRole(persisted.role);
     setIsAuthenticated(Boolean(persisted.isAuthenticated));
-    setTiers(persisted.tiers);
-    setPromotions(persisted.promotions);
-    setCurrentCustomerId(persisted.currentCustomerId);
-    setCustomers(persisted.customers);
+    const restoredBookings = persisted.bookings ?? bookingSeed;
+    setTiers(persisted.tiers ?? tierSeed);
+    setPromotions(persisted.promotions ?? promotionSeed);
+    setCurrentCustomerId(persisted.currentCustomerId ?? "c1");
+    setCustomers(persisted.customers ?? customerSeed);
     const restoredStaffMembers = persisted.staffMembers ?? staffSeed;
     const restoredStaffId = persisted.currentStaffId ?? "s1";
     const restoredActiveStaff =
@@ -968,8 +970,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     const restoredWashSessions = persisted.washSessions ?? washSessionSeed;
     setStaffMembers(restoredStaffMembers);
     setCurrentStaffId(restoredActiveStaff.id);
-    setVehiclesByCustomer(persisted.vehiclesByCustomer);
-    setBookings(persisted.bookings);
+    setVehiclesByCustomer(persisted.vehiclesByCustomer ?? vehicleSeed);
+    setBookings(restoredBookings);
     setWashSessions(
       restoredWashSessions.length > 0 || !persisted.sessionDraft
         ? restoredWashSessions
@@ -992,7 +994,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
             },
           ],
     );
-    setSelectedBookingId(persisted.selectedBookingId);
+    setSelectedBookingId(persisted.selectedBookingId ?? "B001");
     setSessionDraft(
       persisted.sessionDraft
         ? {
@@ -1003,19 +1005,20 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           }
         : null,
     );
-    setTransactions(persisted.transactions);
-    setLastTransaction(persisted.lastTransaction);
-    setLedger(persisted.ledger);
+    setTransactions(persisted.transactions ?? transactionSeed);
+    setLastTransaction(persisted.lastTransaction ?? transactionSeed[0]);
+    setLedger(persisted.ledger ?? ledgerSeed);
+    setTierHistory(persisted.tierHistory ?? tierHistorySeed);
     setNotifications(
-      persisted.notifications.map((notification) => ({
+      (persisted.notifications ?? notificationsSeed).map((notification) => ({
         ...notification,
-        timestamp: new Date(notification.timestamp),
+        timestamp: new Date(notification.timestamp ?? new Date()),
       })),
     );
     setAdjustments(
-      persisted.adjustments.map((adjustment) => ({
+      (persisted.adjustments ?? adjustmentSeed).map((adjustment) => ({
         ...adjustment,
-        timestamp: new Date(adjustment.timestamp),
+        timestamp: new Date(adjustment.timestamp ?? new Date()),
       })),
     );
     setPendingRegistration(
@@ -1044,7 +1047,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setNextTierReviewDate(persisted.nextTierReviewDate ?? nextMonthStart());
     setEventKeys(persisted.eventKeys ?? []);
     setVehicleOwnershipHistory(persisted.vehicleOwnershipHistory ?? vehicleOwnershipHistorySeed);
-    nextBookingIdRef.current = nextBookingSequence(persisted.bookings);
+    nextBookingIdRef.current = nextBookingSequence(restoredBookings);
     setHydrated(true);
   }, []);
 
@@ -2155,6 +2158,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const value: Store = {
     role,
     isAuthenticated,
+    hydrated,
     setRole,
     loginAs,
     logout,

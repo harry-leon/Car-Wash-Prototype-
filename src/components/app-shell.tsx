@@ -55,6 +55,7 @@ const STAFF_NAV: NavGroup[] = [
     label: "Staff",
     items: [
       { to: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { to: "/staff/operations", label: "Operations", icon: ClipboardList },
       { to: "/staff/check-in", label: "Check-in", icon: Wrench },
       { to: "/staff/wash-session", label: "Wash Session", icon: CarFront },
       { to: "/staff/checkout", label: "Checkout", icon: ReceiptText },
@@ -102,8 +103,10 @@ export function AppShell({ role }: { role: Role }) {
 
   const store = useCarwashStore();
   const currentCustomer = store.customers.find((c) => c.id === store.currentCustomerId);
-  const profileName = role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
-  const profileTag = role === "Customer" && currentCustomer ? `${currentCustomer.tier} Member` : `${role} Workspace`;
+  const profileName =
+    role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
+  const profileTag =
+    role === "Customer" && currentCustomer ? `${currentCustomer.tier} Member` : `${role} Workspace`;
 
   let headerTitle = "Overview";
   let headerSubtitle = "Manage your car wash activities";
@@ -154,12 +157,18 @@ export function AppShell({ role }: { role: Role }) {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-md overflow-hidden p-0.5">
-                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[10px] object-cover" />
+                <img
+                  src="/logo.png"
+                  alt="AURA CAR CARE logo"
+                  className="h-full w-full rounded-[10px] object-cover"
+                />
               </div>
               {!sidebarCollapsed && (
                 <div className="animate-in fade-in duration-300">
                   <div className="font-bold tracking-tight">AURA CAR CARE</div>
-                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{roleBadge(role)}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {roleBadge(role)}
+                  </div>
                 </div>
               )}
             </div>
@@ -172,7 +181,11 @@ export function AppShell({ role }: { role: Role }) {
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/30"
               aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
             >
-              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
             </button>
           </div>
 
@@ -189,8 +202,8 @@ export function AppShell({ role }: { role: Role }) {
                     onClick={() => switchRole(item)}
                     className={cn(
                       "flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all duration-200 border",
-                      role === item 
-                        ? "bg-primary/10 text-primary border-primary/30 shadow-sm" 
+                      role === item
+                        ? "bg-primary/10 text-primary border-primary/30 shadow-sm"
                         : "bg-transparent text-muted-foreground border-transparent hover:bg-background/80 hover:border-border",
                     )}
                   >
@@ -236,7 +249,14 @@ export function AppShell({ role }: { role: Role }) {
                       {active && !sidebarCollapsed && (
                         <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r-full bg-primary-foreground/30" />
                       )}
-                      <Icon className={cn("h-4 w-4 transition-colors", active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary")} />
+                      <Icon
+                        className={cn(
+                          "h-4 w-4 transition-colors",
+                          active
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground group-hover:text-primary",
+                        )}
+                      />
                       {!sidebarCollapsed && <span>{item.label}</span>}
                     </Link>
                   );
@@ -255,8 +275,12 @@ export function AppShell({ role }: { role: Role }) {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-foreground">Customer Support</div>
-                  <div className="mt-0.5 text-base font-extrabold text-foreground tracking-tight">1900 1234</div>
-                  <div className="mt-1 text-[10px] text-muted-foreground font-medium">8:00 - 20:00 Daily</div>
+                  <div className="mt-0.5 text-base font-extrabold text-foreground tracking-tight">
+                    1900 1234
+                  </div>
+                  <div className="mt-1 text-[10px] text-muted-foreground font-medium">
+                    8:00 - 20:00 Daily
+                  </div>
                 </div>
               </div>
             </div>
@@ -269,7 +293,7 @@ export function AppShell({ role }: { role: Role }) {
             }}
             className={cn(
               "flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 p-3 text-sm font-bold text-foreground transition-all hover:bg-accent hover:text-accent-foreground shadow-sm group",
-              sidebarCollapsed ? "px-0" : "px-4"
+              sidebarCollapsed ? "px-0" : "px-4",
             )}
             title="Sign out"
           >
@@ -284,20 +308,31 @@ export function AppShell({ role }: { role: Role }) {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-4">
               <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm overflow-hidden p-0.5">
-                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[6px] object-cover" />
+                <img
+                  src="/logo.png"
+                  alt="AURA CAR CARE logo"
+                  className="h-full w-full rounded-[6px] object-cover"
+                />
               </div>
               <div className="hidden lg:block">
-                <div className="text-xl font-bold tracking-tight text-foreground">{headerTitle}</div>
+                <div className="text-xl font-bold tracking-tight text-foreground">
+                  {headerTitle}
+                </div>
                 <div className="text-sm font-medium text-muted-foreground mt-0.5">
                   {headerSubtitle}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-5">
-              <button 
+              <button
                 type="button"
-                onClick={() => navigate({ to: role === "Customer" ? "/customer/profile" : `/${role.toLowerCase()}/profile` })}
+                onClick={() =>
+                  navigate({
+                    to:
+                      role === "Customer" ? "/customer/profile" : `/${role.toLowerCase()}/profile`,
+                  })
+                }
                 className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <Bell className="h-5 w-5" />
@@ -308,16 +343,29 @@ export function AppShell({ role }: { role: Role }) {
 
               <div className="h-10 w-px bg-border/60 hidden sm:block" />
 
-              <button 
+              <button
                 type="button"
-                onClick={() => navigate({ to: role === "Customer" ? "/customer/profile" : `/${role.toLowerCase()}/dashboard` })}
+                onClick={() =>
+                  navigate({
+                    to:
+                      role === "Customer"
+                        ? "/customer/profile"
+                        : `/${role.toLowerCase()}/dashboard`,
+                  })
+                }
                 className="group flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
               >
                 <div className="h-10 w-10 overflow-hidden rounded-full border border-border/50 bg-secondary/50 shadow-sm shrink-0">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileName}&backgroundColor=e2e8f0`} alt="Avatar" className="h-full w-full object-cover" />
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileName}&backgroundColor=e2e8f0`}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-sm font-bold text-foreground leading-tight">{profileName}</div>
+                  <div className="text-sm font-bold text-foreground leading-tight">
+                    {profileName}
+                  </div>
                   <div className="mt-1 inline-flex rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[11px] font-bold text-indigo-600 leading-none">
                     {profileTag}
                   </div>

@@ -16,13 +16,17 @@ function PendingState({ message }: { message: string }) {
 
 export function GuestOnly({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { isAuthenticated, role } = useCarwashStore();
+  const { hydrated, isAuthenticated, role } = useCarwashStore();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (hydrated && isAuthenticated) {
       navigate({ to: getHomePath(role), replace: true });
     }
-  }, [isAuthenticated, navigate, role]);
+  }, [hydrated, isAuthenticated, navigate, role]);
+
+  if (!hydrated) {
+    return <PendingState message="Loading your workspace..." />;
+  }
 
   if (isAuthenticated) {
     return <PendingState message="Redirecting to your workspace..." />;
@@ -31,21 +35,19 @@ export function GuestOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function RequireRole({
-  allowed,
-  children,
-}: {
-  allowed: Role[];
-  children: React.ReactNode;
-}) {
+export function RequireRole({ allowed, children }: { allowed: Role[]; children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { isAuthenticated, role } = useCarwashStore();
+  const { hydrated, isAuthenticated, role } = useCarwashStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (hydrated && !isAuthenticated) {
       navigate({ to: "/login", replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [hydrated, isAuthenticated, navigate]);
+
+  if (!hydrated) {
+    return <PendingState message="Loading your workspace..." />;
+  }
 
   if (!isAuthenticated) {
     return <PendingState message="Redirecting to sign in..." />;

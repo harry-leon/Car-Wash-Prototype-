@@ -11,14 +11,24 @@ function StaffDashboardHome() {
     <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto max-w-7xl space-y-8">
         <div>
-          <div className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Staff Workspace</div>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl text-foreground">Operations dashboard</h1>
+          <div className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+            Staff Workspace
+          </div>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+            Operations dashboard
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Move vehicles through check-in, wash preparation, checkout, and notifications.
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <StaffCard
+            to="/staff/operations"
+            title="Operations"
+            text="Track today's queue and move bookings through wash status."
+            icon={ClipboardList}
+          />
           <StaffCard
             to="/staff/check-in"
             title="Check-in Queue"
