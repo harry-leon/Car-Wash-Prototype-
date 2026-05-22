@@ -2,52 +2,103 @@ import * as React from "react";
 import { Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PromotionForm } from "../components/PromotionForm";
 import { PromotionTable } from "../components/PromotionTable";
-import { promotions as promotionsMock } from "../mock/promotions.mock";
+import {
+  type Promotion as StorePromotion,
+  type Tier,
+  useCarwashStore,
+} from "@/lib/carwash-store";
 import type {
-  Promotion,
+  Promotion as DisplayPromotion,
   PromotionDraft,
+  PromotionType,
 } from "../types/promotion.types";
+import { displayTierToStore, tierToDisplay } from "../lib/customer-mapping";
+
+function inferType(tiers: Tier[]): PromotionType {
+  if (tiers.length >= 4) return "ALL_MEMBERS";
+  if (tiers.length === 1 && tiers[0] === "Member") return "NEW_CUSTOMERS";
+  return "SELECTED_TIERS";
+}
+
+function storeToDisplay(promotion: StorePromotion): DisplayPromotion {
+  const targetTiers = promotion.tiers.map(tierToDisplay);
+  return {
+    id: promotion.id,
+    name: promotion.code,
+    type: inferType(promotion.tiers),
+    targetTiers,
+    discountPercent:
+      promotion.discountType === "Percentage"
+        ? promotion.amount
+        : Math.min(100, Math.round((promotion.amount / 100000) * 10)),
+    startDate: promotion.startDate,
+    endDate: promotion.endDate,
+    active: promotion.active,
+    usageCount: 0,
+  };
+}
+
+function draftToStore(draft: PromotionDraft): Omit<StorePromotion, "id"> {
+  const tiers: Tier[] =
+    draft.type === "ALL_MEMBERS"
+      ? (["Member", "Silver", "Gold", "Platinum"] as Tier[])
+      : draft.type === "NEW_CUSTOMERS"
+        ? (["Member"] as Tier[])
+        : draft.targetTiers.map(displayTierToStore);
+  return {
+    code: draft.name,
+    discountType: "Percentage",
+    amount: draft.discountPercent,
+    tiers,
+    active: draft.active,
+    startDate: draft.startDate,
+    endDate: draft.endDate,
+    stackable: false,
+  };
+}
 
 export function PromotionsPage() {
-  const [items, setItems] = React.useState<Promotion[]>(promotionsMock);
+  const { promotions, addPromotion, updatePromotion, togglePromotion, hydrated } =
+    useCarwashStore();
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editTarget, setEditTarget] = React.useState<Promotion | null>(null);
+  const [editTarget, setEditTarget] = React.useState<DisplayPromotion | null>(null);
+
+  const items = React.useMemo(() => promotions.map(storeToDisplay), [promotions]);
 
   const handleOpenCreate = () => {
     setEditTarget(null);
     setDialogOpen(true);
   };
 
-  const handleOpenEdit = (promotion: Promotion) => {
+  const handleOpenEdit = (promotion: DisplayPromotion) => {
     setEditTarget(promotion);
     setDialogOpen(true);
   };
 
   const handleSubmit = (draft: PromotionDraft, id?: string) => {
-    if (id) {
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...draft } : item)));
-      toast.success(`Updated promotion: ${draft.name}`);
-    } else {
-      const newPromotion: Promotion = {
-        ...draft,
-        id: `p-${Date.now()}`,
-        usageCount: 0,
-      };
-      setItems((prev) => [newPromotion, ...prev]);
-      toast.success(`Created promotion: ${draft.name}`);
+    try {
+      const payload = draftToStore(draft);
+      if (id) {
+        updatePromotion(id, payload);
+        toast.success(`Updated promotion: ${draft.name}`);
+      } else {
+        addPromotion(payload);
+        toast.success(`Created promotion: ${draft.name}`);
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save promotion.");
     }
-    setDialogOpen(false);
   };
 
   const handleToggleActive = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item)),
-    );
-    const target = items.find((item) => item.id === id);
+    const target = promotions.find((promotion) => promotion.id === id);
+    togglePromotion(id);
     if (target) {
-      toast.success(`${target.active ? "Deactivated" : "Activated"} ${target.name}`);
+      toast.success(`${target.active ? "Deactivated" : "Activated"} ${target.code}`);
     }
   };
 
@@ -63,7 +114,7 @@ export function PromotionsPage() {
               Promotions catalog
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Create, edit and deactivate promotions targeting specific tiers or audiences.
+              Create, edit and deactivate promotions targeting specific tiers or audiences. Edits sync with the live store and apply at checkout.
             </p>
           </div>
           <Button onClick={handleOpenCreate} className="gap-2">
@@ -71,11 +122,17 @@ export function PromotionsPage() {
           </Button>
         </div>
 
-        <PromotionTable
-          promotions={items}
-          onEdit={handleOpenEdit}
-          onToggleActive={handleToggleActive}
-        />
+        {!hydrated ? (
+          <Card className="border-border/50 bg-card/60 p-10 text-center text-sm text-muted-foreground backdrop-blur-xl">
+            Loading promotions…
+          </Card>
+        ) : (
+          <PromotionTable
+            promotions={items}
+            onEdit={handleOpenEdit}
+            onToggleActive={handleToggleActive}
+          />
+        )}
 
         <PromotionForm
           open={dialogOpen}

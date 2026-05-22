@@ -1,73 +1,44 @@
 import * as React from "react";
 import {
-  Banknote,
   Building2,
   Coins,
-  Globe,
   Settings as SettingsIcon,
   ShieldAlert,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { SettingsSection } from "../components/SettingsSection";
-import { defaultSettings } from "../mock/settings.mock";
-import type { AdminSettingsState } from "../types/settings.types";
 import styles from "../styles/settings.module.css";
 
-const AVAILABLE_LANGUAGES = [
-  { code: "vi-VN", label: "Tiếng Việt" },
-  { code: "en-US", label: "English (US)" },
-  { code: "ja-JP", label: "日本語" },
-  { code: "ko-KR", label: "한국어" },
-];
-
 export function SettingsPage() {
-  const [settings, setSettings] = React.useState<AdminSettingsState>(defaultSettings);
+  const { settings, updateSettings, resetSettings, hydrated } = useCarwashStore();
+  const [draft, setDraft] = React.useState(settings);
 
-  const update = <K extends keyof AdminSettingsState>(
-    key: K,
-    value: AdminSettingsState[K],
-  ) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const toggleLanguage = (code: string) => {
-    setSettings((prev) => {
-      const exists = prev.localization.supportedLanguages.includes(code);
-      const nextList = exists
-        ? prev.localization.supportedLanguages.filter((item) => item !== code)
-        : [...prev.localization.supportedLanguages, code];
-      return {
-        ...prev,
-        localization: {
-          ...prev.localization,
-          supportedLanguages: nextList.length > 0 ? nextList : prev.localization.supportedLanguages,
-        },
-      };
-    });
-  };
+  React.useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
 
   const handleReset = () => {
-    setSettings(defaultSettings);
-    toast.success("Settings reset to defaults (mock).");
+    resetSettings();
+    toast.success("Settings reset to defaults.");
   };
 
   const handleSave = () => {
-    toast.success("Settings saved locally (mock — nothing persisted).");
+    updateSettings(draft);
+    toast.success("Settings saved.");
   };
+
+  if (!hydrated) {
+    return (
+      <div className="p-10 text-center text-sm text-muted-foreground">Loading settings…</div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 lg:p-10">
@@ -81,11 +52,13 @@ export function SettingsPage() {
               Workspace settings
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Tune business identity, loyalty conversion and localization. All changes stay in local state only.
+              Tune business identity, loyalty conversion and cancellation enforcement. Saved values persist across sessions on this device.
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>Reset defaults</Button>
+            <Button variant="outline" onClick={handleReset}>
+              Reset defaults
+            </Button>
             <Button onClick={handleSave}>Save changes</Button>
           </div>
         </div>
@@ -99,35 +72,60 @@ export function SettingsPage() {
             <div className={styles.fieldRow}>
               <Field label="Brand name">
                 <Input
-                  value={settings.business.brandName}
-                  onChange={(event) => update("business", { ...settings.business, brandName: event.target.value })}
+                  value={draft.business.brandName}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      business: { ...prev.business, brandName: event.target.value },
+                    }))
+                  }
                 />
               </Field>
               <Field label="Hotline">
                 <Input
-                  value={settings.business.hotline}
-                  onChange={(event) => update("business", { ...settings.business, hotline: event.target.value })}
+                  value={draft.business.hotline}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      business: { ...prev.business, hotline: event.target.value },
+                    }))
+                  }
                 />
               </Field>
               <Field label="Email">
                 <Input
                   type="email"
-                  value={settings.business.email}
-                  onChange={(event) => update("business", { ...settings.business, email: event.target.value })}
+                  value={draft.business.email}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      business: { ...prev.business, email: event.target.value },
+                    }))
+                  }
                 />
               </Field>
               <Field label="Operating hours">
                 <Input
-                  value={settings.business.operatingHours}
-                  onChange={(event) => update("business", { ...settings.business, operatingHours: event.target.value })}
+                  value={draft.business.operatingHours}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      business: { ...prev.business, operatingHours: event.target.value },
+                    }))
+                  }
                 />
               </Field>
             </div>
             <Field label="Headquarter">
               <Textarea
                 rows={2}
-                value={settings.business.headquarter}
-                onChange={(event) => update("business", { ...settings.business, headquarter: event.target.value })}
+                value={draft.business.headquarter}
+                onChange={(event) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    business: { ...prev.business, headquarter: event.target.value },
+                  }))
+                }
               />
             </Field>
           </SettingsSection>
@@ -142,12 +140,15 @@ export function SettingsPage() {
                 <Input
                   type="number"
                   min={0}
-                  value={settings.cancellation.freeCancelHoursBefore}
+                  value={draft.cancellation.freeCancelHoursBefore}
                   onChange={(event) =>
-                    update("cancellation", {
-                      ...settings.cancellation,
-                      freeCancelHoursBefore: Number(event.target.value),
-                    })
+                    setDraft((prev) => ({
+                      ...prev,
+                      cancellation: {
+                        ...prev.cancellation,
+                        freeCancelHoursBefore: Number(event.target.value),
+                      },
+                    }))
                   }
                 />
               </Field>
@@ -156,12 +157,15 @@ export function SettingsPage() {
                   type="number"
                   min={0}
                   max={100}
-                  value={settings.cancellation.lateCancelFeePercent}
+                  value={draft.cancellation.lateCancelFeePercent}
                   onChange={(event) =>
-                    update("cancellation", {
-                      ...settings.cancellation,
-                      lateCancelFeePercent: Number(event.target.value),
-                    })
+                    setDraft((prev) => ({
+                      ...prev,
+                      cancellation: {
+                        ...prev.cancellation,
+                        lateCancelFeePercent: Number(event.target.value),
+                      },
+                    }))
                   }
                 />
               </Field>
@@ -169,9 +173,12 @@ export function SettingsPage() {
             <Field label="Refund policy">
               <Textarea
                 rows={3}
-                value={settings.cancellation.refundPolicy}
+                value={draft.cancellation.refundPolicy}
                 onChange={(event) =>
-                  update("cancellation", { ...settings.cancellation, refundPolicy: event.target.value })
+                  setDraft((prev) => ({
+                    ...prev,
+                    cancellation: { ...prev.cancellation, refundPolicy: event.target.value },
+                  }))
                 }
               />
             </Field>
@@ -187,9 +194,12 @@ export function SettingsPage() {
                 <Input
                   type="number"
                   min={1}
-                  value={settings.point.spendPerPoint}
+                  value={draft.point.spendPerPoint}
                   onChange={(event) =>
-                    update("point", { ...settings.point, spendPerPoint: Number(event.target.value) })
+                    setDraft((prev) => ({
+                      ...prev,
+                      point: { ...prev.point, spendPerPoint: Number(event.target.value) },
+                    }))
                   }
                 />
               </Field>
@@ -197,9 +207,12 @@ export function SettingsPage() {
                 <Input
                   type="number"
                   min={1}
-                  value={settings.point.pointValueVnd}
+                  value={draft.point.pointValueVnd}
                   onChange={(event) =>
-                    update("point", { ...settings.point, pointValueVnd: Number(event.target.value) })
+                    setDraft((prev) => ({
+                      ...prev,
+                      point: { ...prev.point, pointValueVnd: Number(event.target.value) },
+                    }))
                   }
                 />
               </Field>
@@ -207,9 +220,12 @@ export function SettingsPage() {
                 <Input
                   type="number"
                   min={0}
-                  value={settings.point.minRedeemPoints}
+                  value={draft.point.minRedeemPoints}
                   onChange={(event) =>
-                    update("point", { ...settings.point, minRedeemPoints: Number(event.target.value) })
+                    setDraft((prev) => ({
+                      ...prev,
+                      point: { ...prev.point, minRedeemPoints: Number(event.target.value) },
+                    }))
                   }
                 />
               </Field>
@@ -217,126 +233,85 @@ export function SettingsPage() {
           </SettingsSection>
 
           <SettingsSection
-            title="No-show threshold"
+            title="Cancellation auto-ban"
             icon={<ShieldAlert className="h-4 w-4 text-orange-500" />}
-            description="When customers should be auto-suspended for repeated no-shows."
+            description="Temporarily suspend customers who cancel bookings too many times."
           >
+            <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/40 p-3">
+              <div>
+                <div className="text-sm font-semibold">Enable auto-ban rule</div>
+                <div className="text-xs text-muted-foreground">
+                  When a customer hits the threshold within the rolling window, they are blocked for the configured ban period.
+                </div>
+              </div>
+              <Switch
+                checked={draft.cancellationAutoBan.enabled}
+                onCheckedChange={(checked) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    cancellationAutoBan: { ...prev.cancellationAutoBan, enabled: checked },
+                  }))
+                }
+              />
+            </div>
             <div className={styles.fieldRow}>
-              <Field label="Threshold (no-shows)">
+              <Field label="Cancellation threshold">
                 <Input
                   type="number"
                   min={1}
-                  value={settings.noShow.thresholdCount}
+                  value={draft.cancellationAutoBan.thresholdCount}
                   onChange={(event) =>
-                    update("noShow", { ...settings.noShow, thresholdCount: Number(event.target.value) })
+                    setDraft((prev) => ({
+                      ...prev,
+                      cancellationAutoBan: {
+                        ...prev.cancellationAutoBan,
+                        thresholdCount: Math.max(1, Number(event.target.value)),
+                      },
+                    }))
                   }
                 />
               </Field>
-              <Field label="Cooldown (days)">
+              <Field label="Rolling window (days)">
                 <Input
                   type="number"
-                  min={0}
-                  value={settings.noShow.cooldownDays}
+                  min={1}
+                  value={draft.cancellationAutoBan.windowDays}
                   onChange={(event) =>
-                    update("noShow", { ...settings.noShow, cooldownDays: Number(event.target.value) })
+                    setDraft((prev) => ({
+                      ...prev,
+                      cancellationAutoBan: {
+                        ...prev.cancellationAutoBan,
+                        windowDays: Math.max(1, Number(event.target.value)),
+                      },
+                    }))
                   }
                 />
               </Field>
-            </div>
-            <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/40 p-3">
-              <div>
-                <div className="text-sm font-semibold">Auto-suspend after threshold</div>
-                <div className="text-xs text-muted-foreground">Suspends the customer until cooldown ends.</div>
-              </div>
-              <Switch
-                checked={settings.noShow.autoSuspend}
-                onCheckedChange={(checked) => update("noShow", { ...settings.noShow, autoSuspend: checked })}
-              />
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
-            title="Supported languages"
-            icon={<Globe className="h-4 w-4 text-sky-500" />}
-            description="Languages exposed to the customer-facing app."
-          >
-            <div className="space-y-2">
-              {AVAILABLE_LANGUAGES.map((lang) => (
-                <label key={lang.code} className="flex cursor-pointer items-center justify-between rounded-md border border-border/50 bg-background/40 px-3 py-2 text-sm">
-                  <span>
-                    <span className="font-semibold">{lang.label}</span>
-                    <span className="ml-2 font-mono text-xs text-muted-foreground">{lang.code}</span>
-                  </span>
-                  <Checkbox
-                    checked={settings.localization.supportedLanguages.includes(lang.code)}
-                    onCheckedChange={() => toggleLanguage(lang.code)}
-                  />
-                </label>
-              ))}
-            </div>
-            <Field label="Default language">
-              <Select
-                value={settings.localization.defaultLanguage}
-                onValueChange={(next) =>
-                  update("localization", { ...settings.localization, defaultLanguage: next })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {settings.localization.supportedLanguages.map((code) => (
-                    <SelectItem key={code} value={code}>
-                      {AVAILABLE_LANGUAGES.find((item) => item.code === code)?.label ?? code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </SettingsSection>
-
-          <SettingsSection
-            title="Currency format"
-            icon={<Banknote className="h-4 w-4 text-emerald-500" />}
-            description="Locale-aware currency display."
-          >
-            <div className={styles.fieldRow}>
-              <Field label="Currency code">
+              <Field label="Ban duration (days)">
                 <Input
-                  value={settings.localization.currencyCode}
+                  type="number"
+                  min={1}
+                  value={draft.cancellationAutoBan.banDays}
                   onChange={(event) =>
-                    update("localization", { ...settings.localization, currencyCode: event.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Currency symbol">
-                <Input
-                  value={settings.localization.currencySymbol}
-                  onChange={(event) =>
-                    update("localization", { ...settings.localization, currencySymbol: event.target.value })
+                    setDraft((prev) => ({
+                      ...prev,
+                      cancellationAutoBan: {
+                        ...prev.cancellationAutoBan,
+                        banDays: Math.max(1, Number(event.target.value)),
+                      },
+                    }))
                   }
                 />
               </Field>
             </div>
-            <Field label="Number format">
-              <Select
-                value={settings.localization.numberFormat}
-                onValueChange={(next) =>
-                  update("localization", {
-                    ...settings.localization,
-                    numberFormat: next as AdminSettingsState["localization"]["numberFormat"],
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vi-VN">vi-VN (e.g. 1.234.567)</SelectItem>
-                  <SelectItem value="en-US">en-US (e.g. 1,234,567)</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <p className="text-xs text-muted-foreground">
+              Currently set to ban customers who cancel{" "}
+              <strong className="text-foreground">{draft.cancellationAutoBan.thresholdCount}</strong>{" "}
+              or more bookings within{" "}
+              <strong className="text-foreground">{draft.cancellationAutoBan.windowDays}</strong>{" "}
+              days for{" "}
+              <strong className="text-foreground">{draft.cancellationAutoBan.banDays}</strong> days.
+            </p>
           </SettingsSection>
         </div>
       </div>
@@ -347,7 +322,9 @@ export function SettingsPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </Label>
       {children}
     </div>
   );

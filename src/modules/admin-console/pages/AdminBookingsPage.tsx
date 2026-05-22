@@ -8,8 +8,12 @@ import {
   type BookingsFilterState,
 } from "../components/AdminBookingsFilters";
 import { AdminBookingsTable } from "../components/AdminBookingsTable";
-import { adminBookings } from "../mock/bookings.mock";
 import type { AdminBookingRow, BookingStatus } from "../types/dashboard.types";
+import {
+  type Booking as StoreBooking,
+  type BookingStatus as StoreBookingStatus,
+  useCarwashStore,
+} from "@/lib/carwash-store";
 
 const INITIAL_FILTERS: BookingsFilterState = {
   status: "ALL",
@@ -18,15 +22,66 @@ const INITIAL_FILTERS: BookingsFilterState = {
 };
 const PAGE_SIZE = 10;
 
+const STORE_TO_DASHBOARD_STATUS: Record<StoreBookingStatus, BookingStatus> = {
+  Pending: "CONFIRMED",
+  Confirmed: "CONFIRMED",
+  "Checked-in": "CHECKED_IN",
+  Completed: "COMPLETED",
+  Cancelled: "CANCELLED",
+  "No-show": "NO_SHOW",
+};
+
+const DASHBOARD_TO_STORE_STATUS: Record<BookingStatus, StoreBookingStatus | null> = {
+  CONFIRMED: "Confirmed",
+  CHECKED_IN: "Checked-in",
+  IN_PROGRESS: null,
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_SHOW: "No-show",
+};
+
+function toAdminRow(booking: StoreBooking): AdminBookingRow {
+  const status: BookingStatus =
+    booking.washStatus === "In Progress" && booking.status === "Checked-in"
+      ? "IN_PROGRESS"
+      : STORE_TO_DASHBOARD_STATUS[booking.status];
+
+  return {
+    id: booking.id,
+    code: booking.id,
+    customerName: booking.customerName ?? "—",
+    vehiclePlate: booking.vehiclePlate,
+    servicePackage: booking.services.join(", "),
+    scheduledTime: booking.scheduledAt,
+    status,
+  };
+}
+
 export function AdminBookingsPage() {
-  const [rows, setRows] = React.useState<AdminBookingRow[]>(adminBookings);
+  const { bookings, updateBookingStatus, hydrated } = useCarwashStore();
   const [filters, setFilters] = React.useState<BookingsFilterState>(INITIAL_FILTERS);
   const [pageIndex, setPageIndex] = React.useState(0);
 
+  const rows = React.useMemo(
+    () =>
+      [...bookings]
+        .sort(
+          (a, b) =>
+            new Date(`${b.dateISO} ${b.timeSlot}`).getTime() -
+            new Date(`${a.dateISO} ${a.timeSlot}`).getTime(),
+        )
+        .map(toAdminRow),
+    [bookings],
+  );
+
   const filtered = React.useMemo(() => {
+    const filterDate = filters.date;
     return rows.filter((row) => {
       if (filters.status !== "ALL" && row.status !== filters.status) return false;
-      if (filters.date && !row.scheduledTime.startsWith(filters.date)) return false;
+      if (filterDate) {
+        const original = bookings.find((booking) => booking.id === row.id);
+        if (!original || original.dateISO !== filterDate) return false;
+      }
       if (
         filters.customerName &&
         !row.customerName.toLowerCase().includes(filters.customerName.toLowerCase())
@@ -35,7 +90,7 @@ export function AdminBookingsPage() {
       }
       return true;
     });
-  }, [rows, filters]);
+  }, [rows, filters, bookings]);
 
   React.useEffect(() => {
     setPageIndex(0);
@@ -55,12 +110,16 @@ export function AdminBookingsPage() {
   );
 
   const handleChangeStatus = (id: string, next: BookingStatus) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, status: next } : row)),
-    );
-    const target = rows.find((row) => row.id === id);
-    if (target) {
-      toast.success(`Updated ${target.code} → ${next.replace("_", " ")}`);
+    const storeStatus = DASHBOARD_TO_STORE_STATUS[next];
+    if (!storeStatus) {
+      toast.info("In-progress is set automatically when a wash starts.");
+      return;
+    }
+    try {
+      updateBookingStatus(id, storeStatus);
+      toast.success(`Updated ${id} → ${next.replace("_", " ")}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update booking.");
     }
   };
 
@@ -75,7 +134,7 @@ export function AdminBookingsPage() {
             All bookings
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Inspect every booking in the system, filter by status/date/customer and override status when needed.
+            Inspect every booking in the system, filter by status/date/customer and override status when needed. List stays in sync with the live store.
           </p>
         </div>
 
@@ -111,7 +170,13 @@ export function AdminBookingsPage() {
           </div>
         </Card>
 
-        <AdminBookingsTable rows={pageRows} onChangeStatus={handleChangeStatus} />
+        {!hydrated ? (
+          <Card className="border-border/50 bg-card/60 p-10 text-center text-sm text-muted-foreground backdrop-blur-xl">
+            Loading bookings…
+          </Card>
+        ) : (
+          <AdminBookingsTable rows={pageRows} onChangeStatus={handleChangeStatus} />
+        )}
       </div>
     </div>
   );

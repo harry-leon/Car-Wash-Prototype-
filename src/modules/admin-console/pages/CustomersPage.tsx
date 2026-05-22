@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Search, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,22 +11,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { CustomerTable } from "../components/CustomerTable";
 import { CustomerDetailPage } from "./CustomerDetailPage";
-import { customers as customersMock } from "../mock/customers.mock";
+import { storeCustomersToRows } from "../lib/customer-mapping";
 import type { CustomerRow, CustomerTier } from "../types/customer.types";
 import styles from "../styles/customers.module.css";
 
 const TIERS: ("ALL" | CustomerTier)[] = ["ALL", "MEMBER", "SILVER", "GOLD", "DIAMOND"];
+const PAGE_SIZE = 10;
 
 export function CustomersPage() {
+  const { customers, ledger, hydrated } = useCarwashStore();
   const [search, setSearch] = React.useState("");
   const [tierFilter, setTierFilter] = React.useState<"ALL" | CustomerTier>("ALL");
   const [statusFilter, setStatusFilter] = React.useState<"ALL" | "ACTIVE" | "SUSPENDED">("ALL");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(1);
+
+  const rows = React.useMemo<CustomerRow[]>(
+    () => storeCustomersToRows(customers, ledger),
+    [customers, ledger],
+  );
 
   const filtered = React.useMemo<CustomerRow[]>(() => {
-    return customersMock.filter((row) => {
+    return rows.filter((row) => {
       if (tierFilter !== "ALL" && row.tier !== tierFilter) return false;
       if (statusFilter !== "ALL" && row.status !== statusFilter) return false;
       if (search) {
@@ -35,7 +45,15 @@ export function CustomersPage() {
       }
       return true;
     });
+  }, [rows, search, tierFilter, statusFilter]);
+
+  React.useEffect(() => {
+    setPage(1);
   }, [search, tierFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   if (selectedId) {
     return <CustomerDetailPage customerId={selectedId} onBack={() => setSelectedId(null)} />;
@@ -52,14 +70,17 @@ export function CustomersPage() {
             Customer directory
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Browse every account, filter by tier or status, and open a profile to review activity.
+            Browse every account, filter by tier or status, and open a profile to review activity. List stays in sync with bookings, registrations and loyalty changes across the app.
           </p>
         </div>
 
         <Card className="border-border/50 bg-card/60 p-4 shadow-lg backdrop-blur-xl md:p-6">
           <div className={styles.searchRow}>
             <div className="min-w-[240px] flex-1 space-y-1.5">
-              <Label htmlFor="customer-search" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor="customer-search"
+                className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 Search
               </Label>
               <div className="relative">
@@ -74,21 +95,33 @@ export function CustomersPage() {
               </div>
             </div>
             <div className="w-[160px] space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tier</Label>
-              <Select value={tierFilter} onValueChange={(next) => setTierFilter(next as typeof tierFilter)}>
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Tier
+              </Label>
+              <Select
+                value={tierFilter}
+                onValueChange={(next) => setTierFilter(next as typeof tierFilter)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {TIERS.map((tier) => (
-                    <SelectItem key={tier} value={tier}>{tier === "ALL" ? "All tiers" : tier}</SelectItem>
+                    <SelectItem key={tier} value={tier}>
+                      {tier === "ALL" ? "All tiers" : tier}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="w-[160px] space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</Label>
-              <Select value={statusFilter} onValueChange={(next) => setStatusFilter(next as typeof statusFilter)}>
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Status
+              </Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(next) => setStatusFilter(next as typeof statusFilter)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -101,11 +134,46 @@ export function CustomersPage() {
             </div>
           </div>
           <div className="mt-3 text-xs text-muted-foreground">
-            Showing <strong className="text-foreground">{filtered.length}</strong> of {customersMock.length} customers
+            Showing <strong className="text-foreground">{filtered.length}</strong> of {rows.length}{" "}
+            customers
           </div>
         </Card>
 
-        <CustomerTable rows={filtered} onOpenDetail={setSelectedId} />
+        {!hydrated ? (
+          <Card className="border-border/50 bg-card/60 p-10 text-center text-sm text-muted-foreground backdrop-blur-xl">
+            Loading customers…
+          </Card>
+        ) : (
+          <>
+            <CustomerTable rows={pageRows} onOpenDetail={setSelectedId} />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
+              <span>
+                Page <strong className="text-foreground">{safePage}</strong> of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                >
+                  <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                >
+                  Next
+                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

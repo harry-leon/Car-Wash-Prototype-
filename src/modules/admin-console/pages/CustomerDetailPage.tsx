@@ -3,6 +3,7 @@ import { ArrowLeft, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCarwashStore } from "@/lib/carwash-store";
 import { CustomerProfilePanel } from "../components/CustomerProfilePanel";
 import { CustomerVehiclesTab } from "../components/CustomerVehiclesTab";
 import { CustomerBookingsTab } from "../components/CustomerBookingsTab";
@@ -10,17 +11,19 @@ import { CustomerWashHistoryTab } from "../components/CustomerWashHistoryTab";
 import { CustomerPointsTab } from "../components/CustomerPointsTab";
 import { CustomerTierHistoryTab } from "../components/CustomerTierHistoryTab";
 import {
-  customers,
-  customerBookings,
-  customerVehicles,
-  pointTransactionsByCustomer,
-  tierHistoryByCustomer,
-  washHistory,
-} from "../mock/customers.mock";
+  bookingToDisplay,
+  completedBookingToHistory,
+  displayStatusToStore,
+  ledgerEntryToPointTx,
+  statusToDisplay,
+  storeCustomersToRows,
+  tierToDisplay,
+  vehicleToDisplay,
+} from "../lib/customer-mapping";
 import type {
   CustomerRole,
-  CustomerRow,
   CustomerStatus,
+  TierHistoryItem,
 } from "../types/customer.types";
 import styles from "../styles/customers.module.css";
 
@@ -30,10 +33,23 @@ interface Props {
 }
 
 export function CustomerDetailPage({ customerId, onBack }: Props) {
-  const customer: CustomerRow | undefined = customers.find((row) => row.id === customerId);
+  const {
+    customers,
+    ledger,
+    bookings,
+    vehiclesByCustomer,
+    tierHistory,
+    updateCustomerById,
+  } = useCarwashStore();
 
-  const [draftRole, setDraftRole] = React.useState<CustomerRole>(customer?.role ?? "CUSTOMER");
-  const [draftStatus, setDraftStatus] = React.useState<CustomerStatus>(customer?.status ?? "ACTIVE");
+  const customerRecord = customers.find((row) => row.id === customerId);
+  const customer = React.useMemo(() => {
+    if (!customerRecord) return undefined;
+    return storeCustomersToRows([customerRecord], ledger)[0];
+  }, [customerRecord, ledger]);
+
+  const [draftRole, setDraftRole] = React.useState<CustomerRole>("CUSTOMER");
+  const [draftStatus, setDraftStatus] = React.useState<CustomerStatus>("ACTIVE");
 
   React.useEffect(() => {
     if (customer) {
@@ -42,7 +58,67 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
     }
   }, [customer]);
 
-  if (!customer) {
+  const vehicles = React.useMemo(
+    () => (vehiclesByCustomer[customerId] ?? []).map(vehicleToDisplay),
+    [vehiclesByCustomer, customerId],
+  );
+
+  const customerBookings = React.useMemo(
+    () =>
+      bookings
+        .filter((booking) => booking.customerId === customerId)
+        .sort(
+          (a, b) =>
+            new Date(`${b.dateISO} ${b.timeSlot}`).getTime() -
+            new Date(`${a.dateISO} ${a.timeSlot}`).getTime(),
+        )
+        .map(bookingToDisplay),
+    [bookings, customerId],
+  );
+
+  const history = React.useMemo(
+    () =>
+      bookings
+        .filter((booking) => booking.customerId === customerId && booking.status === "Completed")
+        .sort(
+          (a, b) =>
+            new Date(b.completedAt ?? b.dateISO).getTime() -
+            new Date(a.completedAt ?? a.dateISO).getTime(),
+        )
+        .map(completedBookingToHistory),
+    [bookings, customerId],
+  );
+
+  const points = React.useMemo(() => {
+    const entries = ledger
+      .filter((entry) => entry.customerId === customerId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .map(ledgerEntryToPointTx);
+
+    let running = customerRecord?.points ?? 0;
+    return entries.map((tx) => {
+      const out = { ...tx, availableAfter: running, lifetimeAfter: running };
+      running = Math.max(0, running - tx.amount);
+      return out;
+    });
+  }, [ledger, customerId, customerRecord?.points]);
+
+  const tierHistoryForCustomer = React.useMemo<TierHistoryItem[]>(() => {
+    if (!customerRecord) return [];
+    return tierHistory
+      .filter((entry) => entry.customerName === customerRecord.name)
+      .map((entry) => ({
+        id: entry.id,
+        customerId: customerRecord.id,
+        customerName: entry.customerName,
+        fromTier: tierToDisplay(entry.previousTier),
+        toTier: tierToDisplay(entry.newTier),
+        changedAt: entry.date,
+        reason: entry.trigger,
+      }));
+  }, [tierHistory, customerRecord]);
+
+  if (!customer || !customerRecord) {
     return (
       <div className="p-6 md:p-10">
         <div className="rounded-2xl border border-border/50 bg-card/60 p-8 text-center backdrop-blur-xl">
@@ -57,21 +133,28 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
     );
   }
 
-  const vehicles = customerVehicles[customer.id] ?? [];
-  const bookings = customerBookings[customer.id] ?? [];
-  const history = washHistory[customer.id] ?? [];
-  const points = pointTransactionsByCustomer[customer.id] ?? [];
-  const tierHistory = tierHistoryByCustomer[customer.id] ?? [];
-
   const handleRoleChange = (next: CustomerRole) => {
     setDraftRole(next);
-    toast.success(`Mock: role set to ${next}`);
+    toast.info("Role overrides are not persisted in this prototype.");
   };
 
   const handleStatusChange = (next: CustomerStatus) => {
     setDraftStatus(next);
-    toast.success(`Mock: status set to ${next}`);
+    const nextStatus = displayStatusToStore(next);
+    updateCustomerById(customerRecord.id, { status: nextStatus });
+    toast.success(
+      next === "ACTIVE"
+        ? `${customerRecord.name} is now active.`
+        : `${customerRecord.name} has been suspended.`,
+    );
   };
+
+  // Reflect any external status updates back into the draft
+  React.useEffect(() => {
+    if (customerRecord) {
+      setDraftStatus(statusToDisplay(customerRecord.status));
+    }
+  }, [customerRecord]);
 
   return (
     <div className="p-4 md:p-8 lg:p-10">
@@ -130,11 +213,11 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
                     label="Lifetime points"
                     value={customer.lifetimePoints.toLocaleString("vi-VN")}
                   />
-                  <ProfileField label="Current role (draft)" value={draftRole} />
-                  <ProfileField label="Current status (draft)" value={draftStatus} />
+                  <ProfileField label="Role" value={draftRole} />
+                  <ProfileField label="Status" value={draftStatus} />
                 </div>
                 <p className="mt-6 text-xs text-muted-foreground">
-                  Role &amp; status edits live in the left panel and are kept in local state only — nothing is persisted.
+                  Status changes persist to the shared store. Role overrides are local to this view in this prototype.
                 </p>
               </div>
             </TabsContent>
@@ -144,7 +227,7 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
             </TabsContent>
 
             <TabsContent value="bookings" className="mt-4">
-              <CustomerBookingsTab bookings={bookings} />
+              <CustomerBookingsTab bookings={customerBookings} />
             </TabsContent>
 
             <TabsContent value="wash-history" className="mt-4">
@@ -156,7 +239,7 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
             </TabsContent>
 
             <TabsContent value="tiers" className="mt-4">
-              <CustomerTierHistoryTab history={tierHistory} />
+              <CustomerTierHistoryTab history={tierHistoryForCustomer} />
             </TabsContent>
           </Tabs>
         </div>
@@ -168,8 +251,12 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
 function ProfileField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="rounded-xl border border-border/50 bg-background/40 p-4">
-      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`mt-1.5 text-sm font-semibold text-foreground ${mono ? "font-mono" : ""}`}>{value}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className={`mt-1.5 text-sm font-semibold text-foreground ${mono ? "font-mono" : ""}`}>
+        {value}
+      </div>
     </div>
   );
 }

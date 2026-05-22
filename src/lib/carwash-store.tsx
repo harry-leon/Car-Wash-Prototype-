@@ -93,6 +93,7 @@ export interface Booking {
   checkoutPointsEarned?: number;
   checkoutPointsRedeemed?: number;
   checkoutPromoCode?: string;
+  cancelledAt?: string;
 }
 
 export interface SessionDraft {
@@ -226,6 +227,40 @@ export interface Adjustment {
   reason: string;
 }
 
+export interface BusinessSettings {
+  brandName: string;
+  hotline: string;
+  email: string;
+  headquarter: string;
+  operatingHours: string;
+}
+
+export interface CancellationPolicySettings {
+  freeCancelHoursBefore: number;
+  lateCancelFeePercent: number;
+  refundPolicy: string;
+}
+
+export interface PointConversionSettings {
+  spendPerPoint: number;
+  pointValueVnd: number;
+  minRedeemPoints: number;
+}
+
+export interface CancellationAutoBanSettings {
+  enabled: boolean;
+  thresholdCount: number;
+  windowDays: number;
+  banDays: number;
+}
+
+export interface AppSettings {
+  business: BusinessSettings;
+  cancellation: CancellationPolicySettings;
+  point: PointConversionSettings;
+  cancellationAutoBan: CancellationAutoBanSettings;
+}
+
 interface PendingRegistration {
   name: string;
   phone: string;
@@ -249,6 +284,7 @@ interface PersistedStore {
   role: Role;
   isAuthenticated: boolean;
   tiers: TierRule[];
+  services: Service[];
   promotions: Promotion[];
   currentCustomerId: string;
   customers: CustomerRecord[];
@@ -271,6 +307,7 @@ interface PersistedStore {
   nextTierReviewDate: string;
   eventKeys: string[];
   vehicleOwnershipHistory: VehicleOwnershipHistoryEntry[];
+  settings: AppSettings;
 }
 
 interface Store {
@@ -305,6 +342,9 @@ interface Store {
   pendingTierRules: TierRule[] | null;
   nextTierReviewDate: string;
   vehicleOwnershipHistory: VehicleOwnershipHistoryEntry[];
+  settings: AppSettings;
+  updateSettings: (patch: Partial<AppSettings>) => void;
+  resetSettings: () => void;
   setPendingRegistration: (value: PendingRegistration | null) => void;
   requestRegistrationOtp: (input: {
     name: string;
@@ -318,6 +358,10 @@ interface Store {
   resendPhoneChangeOtp: () => string;
   confirmPhoneChange: (otpCode: string) => void;
   updateCurrentProfile: (patch: Partial<Pick<CustomerRecord, "name" | "email" | "status">>) => void;
+  updateCustomerById: (
+    id: string,
+    patch: Partial<Pick<CustomerRecord, "status" | "name" | "email" | "tier">>,
+  ) => void;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicle: (id: string, vehicle: Omit<Vehicle, "id">) => void;
   deleteVehicle: (id: string) => { ok: boolean; error?: string };
@@ -360,7 +404,11 @@ interface Store {
   updateCustomerPoints: (customerId: string, nextPoints: number, reason?: string) => void;
   redeemReward: (customerId: string, reward: Reward) => boolean;
   updateTiers: (tiers: TierRule[]) => void;
+  addService: (service: Omit<Service, "id">) => Service;
+  updateService: (id: string, patch: Partial<Omit<Service, "id">>) => void;
+  removeService: (id: string) => { ok: boolean; error?: string };
   addPromotion: (promotion: Omit<Promotion, "id">) => void;
+  updatePromotion: (id: string, patch: Partial<Omit<Promotion, "id">>) => void;
   togglePromotion: (id: string) => void;
   pushNotification: (notification: Omit<NotificationItem, "id" | "timestamp">) => void;
   addAdjustment: (adjustment: {
@@ -753,6 +801,32 @@ const transactionSeed: Transaction[] = [
 
 const washSessionSeed: WashSessionRecord[] = [];
 
+const defaultSettings: AppSettings = {
+  business: {
+    brandName: "AURA CAR CARE",
+    hotline: "1900 5566",
+    email: "support@auracarcare.vn",
+    headquarter: "12 Nguyen Hue, District 1, Ho Chi Minh City",
+    operatingHours: "07:00 - 21:00 (Mon - Sun)",
+  },
+  cancellation: {
+    freeCancelHoursBefore: 12,
+    lateCancelFeePercent: 30,
+    refundPolicy: "Full refund if cancelled at least 12 hours in advance; otherwise 30% fee.",
+  },
+  point: {
+    spendPerPoint: 10000,
+    pointValueVnd: 200,
+    minRedeemPoints: 200,
+  },
+  cancellationAutoBan: {
+    enabled: true,
+    thresholdCount: 3,
+    windowDays: 30,
+    banDays: 14,
+  },
+};
+
 const STORAGE_KEY = "carwash-prototype-state-v3";
 const SHOP_CAPACITY = 3;
 const OTP_TTL_MS = 60 * 1000;
@@ -1007,7 +1081,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const [role, setRole] = React.useState<Role>("Customer");
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [tiers, setTiers] = React.useState<TierRule[]>(tierSeed);
-  const [services] = React.useState<Service[]>(serviceSeed);
+  const [services, setServices] = React.useState<Service[]>(serviceSeed);
   const [promotions, setPromotions] = React.useState<Promotion[]>(promotionSeed);
   const [rewards] = React.useState<Reward[]>(rewardSeed);
   const [currentCustomerId, setCurrentCustomerId] = React.useState("c1");
@@ -1040,6 +1114,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const [vehicleOwnershipHistory, setVehicleOwnershipHistory] = React.useState<
     VehicleOwnershipHistoryEntry[]
   >(vehicleOwnershipHistorySeed);
+  const [settings, setSettings] = React.useState<AppSettings>(defaultSettings);
   const nextBookingIdRef = React.useRef(nextBookingSequence(bookingSeed));
 
   React.useEffect(() => {
@@ -1053,6 +1128,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setIsAuthenticated(Boolean(persisted.isAuthenticated));
     const restoredBookings = mergeSeedBookings(persisted.bookings ?? bookingSeed);
     setTiers(persisted.tiers ?? tierSeed);
+    setServices(persisted.services ?? serviceSeed);
     setPromotions(persisted.promotions ?? promotionSeed);
     setCurrentCustomerId(persisted.currentCustomerId ?? "c1");
     setCustomers(persisted.customers ?? customerSeed);
@@ -1144,6 +1220,17 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setNextTierReviewDate(persisted.nextTierReviewDate ?? nextMonthStart());
     setEventKeys(persisted.eventKeys ?? []);
     setVehicleOwnershipHistory(persisted.vehicleOwnershipHistory ?? vehicleOwnershipHistorySeed);
+    if (persisted.settings) {
+      setSettings({
+        business: { ...defaultSettings.business, ...persisted.settings.business },
+        cancellation: { ...defaultSettings.cancellation, ...persisted.settings.cancellation },
+        point: { ...defaultSettings.point, ...persisted.settings.point },
+        cancellationAutoBan: {
+          ...defaultSettings.cancellationAutoBan,
+          ...persisted.settings.cancellationAutoBan,
+        },
+      });
+    }
     nextBookingIdRef.current = nextBookingSequence(restoredBookings);
     setHydrated(true);
   }, []);
@@ -1195,6 +1282,18 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       );
     },
     [currentCustomerId],
+  );
+
+  const updateCustomerById = React.useCallback(
+    (
+      id: string,
+      patch: Partial<Pick<CustomerRecord, "status" | "name" | "email" | "tier">>,
+    ) => {
+      setCustomers((prev) =>
+        prev.map((customer) => (customer.id === id ? { ...customer, ...patch } : customer)),
+      );
+    },
+    [],
   );
 
   const requestRegistrationOtp = React.useCallback(
@@ -1641,11 +1740,46 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           throw new Error("Cancellation is only allowed at least 2 hours before booking.");
         }
       }
+      const cancelledAt = status === "Cancelled" ? new Date().toISOString() : undefined;
       setBookings((prev) =>
-        prev.map((booking) => (booking.id === id ? { ...booking, status } : booking)),
+        prev.map((booking) =>
+          booking.id === id
+            ? { ...booking, status, ...(cancelledAt ? { cancelledAt } : {}) }
+            : booking,
+        ),
       );
+
+      if (status === "Cancelled" && settings.cancellationAutoBan.enabled) {
+        const { thresholdCount, windowDays, banDays } = settings.cancellationAutoBan;
+        const windowStart = Date.now() - windowDays * 86400000;
+        const cancellationsInWindow =
+          bookings.filter((booking) => {
+            if (booking.customerId !== target.customerId) return false;
+            if (booking.status !== "Cancelled") return false;
+            const when = booking.cancelledAt ? new Date(booking.cancelledAt).getTime() : 0;
+            return when >= windowStart;
+          }).length + 1; // include the one we are about to cancel
+
+        if (cancellationsInWindow >= thresholdCount) {
+          const suspendedUntil = addDays(nowLocalDateISO(), banDays);
+          setCustomers((prev) =>
+            prev.map((customer) =>
+              customer.id === target.customerId
+                ? { ...customer, status: "Blocked", bookingSuspendedUntil: suspendedUntil }
+                : customer,
+            ),
+          );
+          const customerName =
+            customers.find((customer) => customer.id === target.customerId)?.name ?? "Customer";
+          pushNotification({
+            type: "Booking",
+            title: "Customer auto-suspended",
+            message: `${customerName} cancelled ${cancellationsInWindow} bookings within ${windowDays} days and is suspended for ${banDays} days.`,
+          });
+        }
+      }
     },
-    [bookings],
+    [bookings, customers, pushNotification, settings.cancellationAutoBan],
   );
 
   const prepareSessionForBooking = React.useCallback(
@@ -2392,6 +2526,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       role,
       isAuthenticated,
       tiers,
+      services,
       promotions,
       currentCustomerId,
       customers,
@@ -2420,6 +2555,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       nextTierReviewDate,
       eventKeys,
       vehicleOwnershipHistory,
+      settings,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }, [
@@ -2445,11 +2581,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     sessionDraft,
     tierHistory,
     tiers,
+    services,
     transactions,
     vehiclesByCustomer,
     washSessions,
     promotions,
     hydrated,
+    settings,
   ]);
 
   const staffAvailability = React.useMemo(
@@ -2489,6 +2627,18 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     pendingTierRules,
     nextTierReviewDate,
     vehicleOwnershipHistory,
+    settings,
+    updateSettings: (patch) =>
+      setSettings((prev) => ({
+        business: { ...prev.business, ...(patch.business ?? {}) },
+        cancellation: { ...prev.cancellation, ...(patch.cancellation ?? {}) },
+        point: { ...prev.point, ...(patch.point ?? {}) },
+        cancellationAutoBan: {
+          ...prev.cancellationAutoBan,
+          ...(patch.cancellationAutoBan ?? {}),
+        },
+      })),
+    resetSettings: () => setSettings(defaultSettings),
     setPendingRegistration,
     requestRegistrationOtp,
     resendRegistrationOtp,
@@ -2497,6 +2647,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     resendPhoneChangeOtp,
     confirmPhoneChange,
     updateCurrentProfile,
+    updateCustomerById,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -2572,12 +2723,42 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     updateCustomerPoints,
     redeemReward,
     updateTiers: (next) => setPendingTierRules(next),
+    addService: (service) => {
+      const created: Service = { ...service, id: crypto.randomUUID() };
+      setServices((prev) => [...prev, created]);
+      return created;
+    },
+    updateService: (id, patch) =>
+      setServices((prev) =>
+        prev.map((service) => (service.id === id ? { ...service, ...patch } : service)),
+      ),
+    removeService: (id) => {
+      const target = services.find((service) => service.id === id);
+      if (!target) {
+        return { ok: false, error: "Service not found." };
+      }
+      const inUse = bookings.some(
+        (booking) =>
+          isActiveBooking(booking.status) && booking.services.includes(target.name),
+      );
+      if (inUse) {
+        return { ok: false, error: "Service is referenced by an active booking." };
+      }
+      setServices((prev) => prev.filter((service) => service.id !== id));
+      return { ok: true };
+    },
     addPromotion: (promotion) => {
       if (promotion.startDate > promotion.endDate) {
         throw new Error("Promotion start date cannot be after end date.");
       }
       setPromotions((prev) => [{ ...promotion, id: crypto.randomUUID() }, ...prev]);
     },
+    updatePromotion: (id, patch) =>
+      setPromotions((prev) =>
+        prev.map((promotion) =>
+          promotion.id === id ? { ...promotion, ...patch } : promotion,
+        ),
+      ),
     togglePromotion: (id) =>
       setPromotions((prev) =>
         prev.map((promotion) =>

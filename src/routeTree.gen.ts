@@ -47,6 +47,7 @@ import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminRbacRouteImport } from './routes/admin.rbac'
 import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
 import { Route as AdminPointsAuditRouteImport } from './routes/admin.points-audit'
+import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminLoyaltyRouteImport } from './routes/admin.loyalty'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
@@ -251,6 +252,11 @@ const AdminPointsAuditRoute = AdminPointsAuditRouteImport.update({
   path: '/points-audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPackagesRoute = AdminPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoyaltyRoute = AdminLoyaltyRouteImport.update({
   id: '/loyalty',
   path: '/loyalty',
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -392,6 +399,7 @@ export interface FileRoutesByTo {
   '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/packages': typeof AdminPackagesRoute
   '/admin/points-audit': typeof AdminPointsAuditRoute
   '/admin/promotions': typeof AdminPromotionsRoute
   '/admin/rbac': typeof AdminRbacRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/dashboard'
     | '/admin/loyalty'
+    | '/admin/packages'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -554,6 +564,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/dashboard'
     | '/admin/loyalty'
+    | '/admin/packages'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/admin/customers'
     | '/admin/dashboard'
     | '/admin/loyalty'
+    | '/admin/packages'
     | '/admin/points-audit'
     | '/admin/promotions'
     | '/admin/rbac'
@@ -926,6 +938,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPointsAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/packages': {
+      id: '/admin/packages'
+      path: '/packages'
+      fullPath: '/admin/packages'
+      preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/loyalty': {
       id: '/admin/loyalty'
       path: '/loyalty'
@@ -1038,6 +1057,7 @@ interface AdminRouteChildren {
   AdminCustomersRoute: typeof AdminCustomersRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLoyaltyRoute: typeof AdminLoyaltyRoute
+  AdminPackagesRoute: typeof AdminPackagesRoute
   AdminPointsAuditRoute: typeof AdminPointsAuditRoute
   AdminPromotionsRoute: typeof AdminPromotionsRoute
   AdminRbacRoute: typeof AdminRbacRoute
@@ -1053,6 +1073,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLoyaltyRoute: AdminLoyaltyRoute,
+  AdminPackagesRoute: AdminPackagesRoute,
   AdminPointsAuditRoute: AdminPointsAuditRoute,
   AdminPromotionsRoute: AdminPromotionsRoute,
   AdminRbacRoute: AdminRbacRoute,

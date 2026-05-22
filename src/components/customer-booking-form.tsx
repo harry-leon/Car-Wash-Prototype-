@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState, type ElementType } from "react";
-import { Calendar as CalIcon, Car, Check, Droplets, Sparkles, Wind } from "lucide-react";
+import {
+  Calendar as CalIcon,
+  Car,
+  Check,
+  Droplets,
+  Gauge,
+  Shield,
+  Sparkles,
+  Star,
+  Wind,
+  Zap,
+} from "lucide-react";
 import {
   fmtBookingMoney,
   BookingStatus,
@@ -15,7 +26,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<string, ElementType> = { Droplets, Sparkles, Wind };
+const ICONS: Record<string, ElementType> = {
+  Droplets,
+  Sparkles,
+  Wind,
+  Shield,
+  Star,
+  Car,
+  Gauge,
+  Zap,
+};
 const SLOTS = [
   "08:00 AM",
   "09:00 AM",
