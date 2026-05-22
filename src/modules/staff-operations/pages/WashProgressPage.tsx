@@ -4,14 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingStatusBadge } from "../components/BookingStatusBadge";
 import { CompleteWashPanel } from "../components/CompleteWashPanel";
 import {
-  completeWashBooking,
   formatOperationDateTime,
+  useOperationActions,
   useOperationBookings,
 } from "../mock/operations.mock";
 import styles from "../styles/checkin.module.css";
 
 export function WashProgressPage({ bookingId }: { bookingId: string }) {
   const bookings = useOperationBookings();
+  const { completeWashBooking } = useOperationActions();
   const booking = bookings.find((item) => item.id === bookingId) ?? null;
 
   if (!booking) return null;
@@ -19,7 +20,7 @@ export function WashProgressPage({ bookingId }: { bookingId: string }) {
   const handleCompleteWash = () => {
     try {
       const updated = completeWashBooking(booking.id);
-      toast.success(`${updated.bookingCode} completed. Points recorded.`);
+      toast.success(`${updated.bookingCode} completed. +${updated.pointsEarned} points recorded.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to complete wash.");
     }
@@ -53,7 +54,7 @@ export function WashProgressPage({ bookingId }: { bookingId: string }) {
             {booking.pointTransaction && (
               <TimelineItem
                 title="Point transaction"
-                value={`${booking.pointTransaction.id} · +${booking.pointTransaction.pointsEarned} pts`}
+                value={`${booking.pointTransaction.id} - +${booking.pointTransaction.pointsEarned} pts`}
               />
             )}
           </div>

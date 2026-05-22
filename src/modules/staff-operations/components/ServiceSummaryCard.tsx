@@ -1,4 +1,4 @@
-import { CalendarClock, CarFront, UserRound } from "lucide-react";
+import { CalendarClock, CarFront, StickyNote, UserRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatOperationDateTime } from "../mock/operations.mock";
 import type { OperationBooking } from "../types/operations.types";
@@ -25,6 +25,17 @@ export function ServiceSummaryCard({ booking }: { booking: OperationBooking }) {
           <InfoTile label="Assigned staff" value={booking.assignedStaff} />
         </div>
         <div className="mt-5 flex items-center gap-3 rounded-lg border border-border/50 bg-background/55 p-4">
+          <StickyNote className="text-primary" />
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Customer note
+            </div>
+            <div className="mt-1 text-sm font-semibold text-foreground">
+              {booking.customerNote ?? "No customer note."}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-border/50 bg-background/55 p-4">
           <CarFront className="text-primary" />
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

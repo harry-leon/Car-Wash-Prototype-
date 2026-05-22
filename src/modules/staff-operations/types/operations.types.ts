@@ -7,6 +7,11 @@ export interface StaffOption {
   name: string;
 }
 
+export interface OperationHourOption {
+  value: string;
+  label: string;
+}
+
 export interface PointTransactionMock {
   id: string;
   createdAt: string;
@@ -23,6 +28,7 @@ export interface OperationBooking {
   vehicleModel: string;
   servicePackage: string;
   packageDurationMinutes: number;
+  customerNote?: string;
   assignedStaffId: string;
   assignedStaff: string;
   scheduledAt: string;
@@ -36,5 +42,6 @@ export interface OperationBooking {
 export interface OperationFilters {
   status: StaffBookingStatus | "ALL";
   time: OperationsTimeFilter;
+  hour: string;
   staffId: string;
 }

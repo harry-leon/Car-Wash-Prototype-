@@ -8,11 +8,12 @@ import { CheckinPanel } from "../components/CheckinPanel";
 import { EstimatedFinishCard } from "../components/EstimatedFinishCard";
 import { ServiceSummaryCard } from "../components/ServiceSummaryCard";
 import { StartWashPanel } from "../components/StartWashPanel";
-import { checkInBooking, startWashBooking, useOperationBookings } from "../mock/operations.mock";
+import { useOperationActions, useOperationBookings } from "../mock/operations.mock";
 import { WashProgressPage } from "./WashProgressPage";
 
 export function CheckinDetailPage({ bookingId }: { bookingId: string }) {
   const bookings = useOperationBookings();
+  const { checkInBooking, startWashBooking } = useOperationActions();
   const navigate = useNavigate();
   const booking = bookings.find((item) => item.id === bookingId) ?? null;
 
@@ -25,7 +26,7 @@ export function CheckinDetailPage({ bookingId }: { bookingId: string }) {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              The selected operations booking is not available in mock state.
+              The selected operations booking is not available in the current booking list.
             </p>
             <Button
               variant="outline"
@@ -53,7 +54,7 @@ export function CheckinDetailPage({ bookingId }: { bookingId: string }) {
   const handleStartWash = () => {
     try {
       const updated = startWashBooking(booking.id);
-      toast.success(`${updated.vehiclePlate} is now in wash.`);
+      toast.success(`${updated.bookingCode} is now in wash with ${updated.staffName}.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to start wash.");
     }
@@ -83,7 +84,7 @@ export function CheckinDetailPage({ bookingId }: { bookingId: string }) {
               {booking.bookingCode}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {booking.customerName} · {booking.vehiclePlate}
+              {booking.customerName} - {booking.vehiclePlate}
             </p>
           </div>
         </div>

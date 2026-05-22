@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, CarFront, ClipboardList, ReceiptText } from "lucide-react";
+import { Bell, ClipboardList } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/staff/dashboard")({
@@ -18,11 +18,11 @@ function StaffDashboardHome() {
             Operations dashboard
           </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Move vehicles through check-in, wash preparation, checkout, and notifications.
+            Move synced bookings through check-in, wash progress, completion, and notifications.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           <StaffCard
             to="/staff/operations"
             title="Operations"
@@ -32,20 +32,8 @@ function StaffDashboardHome() {
           <StaffCard
             to="/staff/check-in"
             title="Check-in Queue"
-            text="Process booked arrivals and walk-in customers."
+            text="Process booked arrivals with hourly filters."
             icon={ClipboardList}
-          />
-          <StaffCard
-            to="/staff/wash-session"
-            title="Wash Session"
-            text="Prepare services and verify vehicle package details."
-            icon={CarFront}
-          />
-          <StaffCard
-            to="/staff/checkout"
-            title="Checkout"
-            text="Apply discounts, promotions, and finalize payment."
-            icon={ReceiptText}
           />
           <StaffCard
             to="/staff/notifications"

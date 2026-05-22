@@ -66,8 +66,6 @@ const STAFF_NAV: NavGroup[] = [
       { to: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { to: "/staff/operations", label: "Operations", icon: ClipboardList },
       { to: "/staff/check-in", label: "Check-in", icon: Wrench },
-      { to: "/staff/wash-session", label: "Wash Session", icon: CarFront },
-      { to: "/staff/checkout", label: "Checkout", icon: ReceiptText },
       { to: "/staff/notifications", label: "Notifications", icon: Bell },
     ],
   },
@@ -149,7 +147,7 @@ export function AppShell({ role }: { role: Role }) {
     headerSubtitle = "Track your points and membership benefits";
   } else if (role === "Staff") {
     headerTitle = "Staff Dashboard";
-    headerSubtitle = "Manage check-ins and wash sessions";
+    headerSubtitle = "Manage check-ins and operations";
   } else if (role === "Admin") {
     headerTitle = "Admin Control Panel";
     headerSubtitle = "System overview and configurations";

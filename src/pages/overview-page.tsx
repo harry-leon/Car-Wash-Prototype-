@@ -2,16 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   Bell,
-  CarFront,
   ClipboardList,
   Gift,
-  LayoutDashboard,
-  ReceiptText,
   ShieldCheck,
   Sparkles,
   UserPlus,
   Wrench,
-  Activity
+  Activity,
 } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -42,10 +39,12 @@ export function OverviewPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary shadow-sm backdrop-blur-md mb-4">
             <Sparkles className="h-3.5 w-3.5" /> Unified prototype ready for demo
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Carwash main flow hub</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            Carwash main flow hub
+          </h1>
           <p className="mt-3 max-w-3xl text-sm md:text-base text-muted-foreground leading-relaxed">
-            Registration, booking, staff check-in, wash session, checkout, loyalty, notification
-            and admin flows are now linked through one shared business state.
+            Registration, booking, staff check-in, operations, loyalty, notification and admin flows
+            are now linked through one shared business state.
           </p>
         </div>
 
@@ -54,9 +53,8 @@ export function OverviewPage() {
           <StatCard
             label="Active Bookings"
             value={String(
-              bookings.filter(
-                (item) => item.status !== "Completed" && item.status !== "Cancelled",
-              ).length,
+              bookings.filter((item) => item.status !== "Completed" && item.status !== "Cancelled")
+                .length,
             )}
             highlight
           />
@@ -90,36 +88,30 @@ export function OverviewPage() {
                   to="/staff/check-in"
                   icon={Wrench}
                   title="3. Staff check-in"
-                  text="Check in booked customers or handle walk-ins."
+                  text="Check in booked customers from synced bookings."
                 />
                 <FlowLink
-                  to="/staff/wash-session"
-                  icon={CarFront}
-                  title="4. Wash session"
-                  text="Prepare services before checkout."
-                />
-                <FlowLink
-                  to="/staff/checkout"
-                  icon={ReceiptText}
-                  title="5. Checkout"
-                  text="Apply tier discount, promotion and point redemption."
+                  to="/staff/operations"
+                  icon={ClipboardList}
+                  title="4. Operations"
+                  text="Track check-in, wash progress and completion."
                 />
                 <FlowLink
                   to="/customer/loyalty"
                   icon={Gift}
-                  title="6. Loyalty"
+                  title="5. Loyalty"
                   text="View points, tier progress and reward redemption."
                 />
                 <FlowLink
                   to="/staff/notifications"
                   icon={Bell}
-                  title="7. Notifications"
+                  title="6. Notifications"
                   text="Review booking and loyalty notifications."
                 />
                 <FlowLink
                   to="/admin/tiers"
                   icon={ShieldCheck}
-                  title="8. Admin rules"
+                  title="7. Admin rules"
                   text="Manage tier rules, promotions and governance screens."
                 />
               </div>
@@ -133,25 +125,41 @@ export function OverviewPage() {
             <div className="flex-1 p-6 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="rounded-xl border border-border/50 bg-background/50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Active customer</div>
-                  <div className="text-base font-semibold text-foreground">{activeCustomer?.name || "None"}</div>
-                </div>
-                <div className="rounded-xl border border-border/50 bg-background/50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Tier / points</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-semibold text-foreground">{activeCustomer?.tier || "Standard"}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm font-medium text-primary">{activeCustomer?.points || 0} pts</span>
+                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                    Active customer
+                  </div>
+                  <div className="text-base font-semibold text-foreground">
+                    {activeCustomer?.name || "None"}
                   </div>
                 </div>
                 <div className="rounded-xl border border-border/50 bg-background/50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Workspace role</div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                    Tier / points
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold text-foreground">
+                      {activeCustomer?.tier || "Standard"}
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-sm font-medium text-primary">
+                      {activeCustomer?.points || 0} pts
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border/50 bg-background/50 p-4">
+                  <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                    Workspace role
+                  </div>
                   <div className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                     {role}
                   </div>
                 </div>
               </div>
-              <Button asChild size="lg" className="w-full shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-0.5">
+              <Button
+                asChild
+                size="lg"
+                className="w-full shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
+              >
                 <Link to="/customer/bookings/new" className="font-semibold text-sm">
                   Continue Main Flow
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -165,14 +173,34 @@ export function OverviewPage() {
   );
 }
 
-function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function StatCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
-    <Card className={cn("relative overflow-hidden border-border/50 bg-card/60 p-6 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1", highlight && "border-primary/30 bg-primary/5")}>
+    <Card
+      className={cn(
+        "relative overflow-hidden border-border/50 bg-card/60 p-6 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1",
+        highlight && "border-primary/30 bg-primary/5",
+      )}
+    >
       {highlight && (
         <div className="absolute right-0 top-0 h-32 w-32 -translate-y-8 translate-x-8 rounded-full bg-primary/10 blur-2xl" />
       )}
       <div className="relative z-10">
-        <div className={cn("text-[11px] font-bold uppercase tracking-wider", highlight ? "text-primary" : "text-muted-foreground")}>{label}</div>
+        <div
+          className={cn(
+            "text-[11px] font-bold uppercase tracking-wider",
+            highlight ? "text-primary" : "text-muted-foreground",
+          )}
+        >
+          {label}
+        </div>
         <div className="mt-2 text-4xl font-bold tracking-tight text-foreground">{value}</div>
       </div>
     </Card>
@@ -200,8 +228,12 @@ function FlowLink({
         <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground shadow-sm">
           <Icon className="h-5 w-5" />
         </div>
-        <div className="text-sm font-bold text-foreground transition-colors group-hover:text-primary">{title}</div>
-        <div className="mt-1.5 text-xs font-medium leading-relaxed text-muted-foreground/80">{text}</div>
+        <div className="text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+          {title}
+        </div>
+        <div className="mt-1.5 text-xs font-medium leading-relaxed text-muted-foreground/80">
+          {text}
+        </div>
       </div>
     </Link>
   );

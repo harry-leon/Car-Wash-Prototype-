@@ -1,25 +1,27 @@
 import * as React from "react";
+import {
+  type Booking,
+  type CustomerRecord,
+  type StaffRecord,
+  type WashSessionRecord,
+  useCarwashStore,
+} from "@/lib/carwash-store";
 import type {
   OperationBooking,
   OperationFilters,
+  OperationHourOption,
   OperationsTimeFilter,
   StaffOption,
 } from "../types/operations.types";
 
 const NO_SHOW_GRACE_MINUTES = 20;
 
-export const staffOptions: StaffOption[] = [
-  { id: "staff-01", name: "Tran Bao Nam" },
-  { id: "staff-02", name: "Nguyen Van Hung" },
-  { id: "staff-03", name: "Pham Minh Duc" },
-  { id: "staff-04", name: "Hoang Lan" },
-];
-
-function minutesFromNow(minutes: number) {
-  const date = new Date();
-  date.setMinutes(date.getMinutes() + minutes, 0, 0);
-  return date.toISOString();
-}
+const SERVICE_DURATION_MINUTES: Record<string, number> = {
+  "Basic Wash": 35,
+  "Interior Vacuum": 10,
+  "Premium Detail": 70,
+  "Ceramic Coating": 95,
+};
 
 function addMinutes(value: string, minutes: number) {
   const date = new Date(value);
@@ -27,230 +29,185 @@ function addMinutes(value: string, minutes: number) {
   return date.toISOString();
 }
 
-function makeBooking(
-  input: Omit<OperationBooking, "assignedStaff" | "bookingCode"> & { bookingCode?: string },
-): OperationBooking {
-  const staff = staffOptions.find((item) => item.id === input.assignedStaffId);
+function parseSchedule(dateISO: string, timeSlot: string) {
+  const match = timeSlot.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return new Date(`${dateISO} ${timeSlot}`);
+
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem === "PM" && hour < 12) hour += 12;
+  if (meridiem === "AM" && hour === 12) hour = 0;
+
+  const [year, month, day] = dateISO.split("-").map(Number);
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function getScheduledIso(booking: Booking) {
+  const parsed = parseSchedule(booking.dateISO, booking.timeSlot);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+
+  const fallback = new Date(booking.scheduledAt);
+  if (!Number.isNaN(fallback.getTime())) return fallback.toISOString();
+
+  return booking.createdAt;
+}
+
+function getPackageDuration(serviceNames: string[]) {
+  return Math.max(
+    25,
+    serviceNames.reduce(
+      (total, serviceName) => total + (SERVICE_DURATION_MINUTES[serviceName] ?? 30),
+      0,
+    ),
+  );
+}
+
+function getSessionForBooking(sessions: WashSessionRecord[], bookingId: string) {
+  return sessions.find((session) => session.bookingId === bookingId);
+}
+
+function getAssignedStaff(
+  booking: Booking,
+  index: number,
+  sessions: WashSessionRecord[],
+  staffMembers: StaffRecord[],
+) {
+  const session = getSessionForBooking(sessions, booking.id);
+  const activeStaff = staffMembers.filter((staff) => staff.status === "Active");
+  const staff =
+    staffMembers.find((item) => item.id === session?.staffId) ??
+    activeStaff[index % Math.max(activeStaff.length, 1)] ??
+    staffMembers[0];
+
   return {
-    ...input,
-    bookingCode: input.bookingCode ?? input.id,
-    assignedStaff: staff?.name ?? "Unassigned",
+    id: staff?.id ?? "unassigned",
+    name: staff?.name ?? "Unassigned",
   };
 }
 
-const initialBookings: OperationBooking[] = [
-  makeBooking({
-    id: "OPS-1001",
-    customerName: "Tran Minh Anh",
-    customerPhone: "0901234567",
-    vehiclePlate: "51G-123.45",
-    vehicleModel: "Toyota Vios",
-    servicePackage: "Basic Wash + Interior Vacuum",
-    packageDurationMinutes: 45,
-    assignedStaffId: "staff-01",
-    scheduledAt: minutesFromNow(25),
-    status: "CONFIRMED",
-  }),
-  makeBooking({
-    id: "OPS-1002",
-    customerName: "Le Gia Huy",
-    customerPhone: "0912345678",
-    vehiclePlate: "60C-889.11",
-    vehicleModel: "Ford Ranger",
-    servicePackage: "Premium Detail",
-    packageDurationMinutes: 70,
-    assignedStaffId: "staff-02",
-    scheduledAt: minutesFromNow(-12),
-    checkinTime: minutesFromNow(-8),
-    estimatedFinishTime: minutesFromNow(62),
-    status: "CHECKED_IN",
-  }),
-  makeBooking({
-    id: "OPS-1003",
-    customerName: "Pham Thu Trang",
-    customerPhone: "0987654321",
-    vehiclePlate: "30A-998.77",
-    vehicleModel: "Mercedes GLC",
-    servicePackage: "Ceramic Coating",
-    packageDurationMinutes: 95,
-    assignedStaffId: "staff-03",
-    scheduledAt: minutesFromNow(-50),
-    checkinTime: minutesFromNow(-44),
-    estimatedFinishTime: minutesFromNow(51),
-    status: "IN_PROGRESS",
-  }),
-  makeBooking({
-    id: "OPS-1004",
-    customerName: "Nguyen Hoang Son",
-    customerPhone: "0934556677",
-    vehiclePlate: "85F1-072.22",
-    vehicleModel: "Honda SH",
-    servicePackage: "Express Motorbike Wash",
-    packageDurationMinutes: 25,
-    assignedStaffId: "staff-04",
-    scheduledAt: minutesFromNow(-120),
-    checkinTime: minutesFromNow(-114),
-    estimatedFinishTime: minutesFromNow(-89),
-    completedTime: minutesFromNow(-82),
-    status: "COMPLETED",
-    pointTransaction: {
-      id: "PT-1004",
-      createdAt: minutesFromNow(-82),
-      pointsEarned: 18,
-      description: "Earned points for completed wash OPS-1004",
-    },
-  }),
-  makeBooking({
-    id: "OPS-1005",
-    customerName: "Dang Mai Linh",
-    customerPhone: "0977001122",
-    vehiclePlate: "51K-678.90",
-    vehicleModel: "Honda CR-V",
-    servicePackage: "Premium Detail",
-    packageDurationMinutes: 70,
-    assignedStaffId: "staff-01",
-    scheduledAt: minutesFromNow(-38),
-    status: "CONFIRMED",
-  }),
-  makeBooking({
-    id: "OPS-1006",
-    customerName: "Vo Thanh Dat",
-    customerPhone: "0944556677",
-    vehiclePlate: "59A-224.18",
-    vehicleModel: "Mazda CX-5",
-    servicePackage: "Basic Wash",
-    packageDurationMinutes: 35,
-    assignedStaffId: "staff-02",
-    scheduledAt: minutesFromNow(110),
-    status: "CANCELLED",
-  }),
-];
-
-let operationBookings = initialBookings;
-const listeners = new Set<() => void>();
-
-function emit() {
-  listeners.forEach((listener) => listener());
+function getCustomer(booking: Booking, customers: CustomerRecord[]) {
+  return customers.find((customer) => customer.id === booking.customerId);
 }
 
-function applyNoShowPolicy() {
-  const now = Date.now();
-  let changed = false;
-  const next = operationBookings.map((booking) => {
-    const expired =
-      booking.status === "CONFIRMED" &&
-      now - new Date(booking.scheduledAt).getTime() > NO_SHOW_GRACE_MINUTES * 60 * 1000;
-    if (!expired) return booking;
-    changed = true;
-    return { ...booking, status: "NO_SHOW" as const };
-  });
-
-  if (changed) {
-    operationBookings = next;
+function getOperationStatus(booking: Booking, scheduledAt: string): OperationBooking["status"] {
+  if (booking.status === "Cancelled") return "CANCELLED";
+  if (booking.status === "No-show") return "NO_SHOW";
+  if (booking.status === "Completed" || booking.washStatus === "Completed") return "COMPLETED";
+  if (booking.status === "Checked-in" && booking.washStatus === "In Progress") {
+    return "IN_PROGRESS";
   }
-
-  return changed;
+  if (booking.status === "Checked-in") return "CHECKED_IN";
+  if (
+    booking.status === "Confirmed" &&
+    Date.now() - new Date(scheduledAt).getTime() > NO_SHOW_GRACE_MINUTES * 60 * 1000
+  ) {
+    return "NO_SHOW";
+  }
+  return "CONFIRMED";
 }
 
-export function subscribeOperationBookings(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+function toOperationBooking(
+  booking: Booking,
+  index: number,
+  customers: CustomerRecord[],
+  staffMembers: StaffRecord[],
+  washSessions: WashSessionRecord[],
+): OperationBooking | null {
+  const scheduledAt = getScheduledIso(booking);
+  const customer = getCustomer(booking, customers);
+  const assignedStaff = getAssignedStaff(booking, index, washSessions, staffMembers);
+  const duration = getPackageDuration(booking.services);
+  const status = getOperationStatus(booking, scheduledAt);
+  const checkinTime = booking.checkInAt;
+  const session = getSessionForBooking(washSessions, booking.id);
+  const completedTime = booking.completedAt ?? session?.completedAt;
 
-export function getOperationBookings() {
-  applyNoShowPolicy();
-  return operationBookings;
+  return {
+    id: booking.id,
+    bookingCode: booking.id,
+    customerName: booking.customerName ?? customer?.name ?? "Unknown customer",
+    customerPhone: booking.customerPhone ?? customer?.phone ?? "-",
+    vehiclePlate: booking.vehiclePlate,
+    vehicleModel: booking.vehicleName,
+    servicePackage: booking.services.join(" + "),
+    packageDurationMinutes: duration,
+    customerNote: booking.notes?.trim() || "No customer note.",
+    assignedStaffId: assignedStaff.id,
+    assignedStaff: assignedStaff.name,
+    scheduledAt,
+    checkinTime,
+    estimatedFinishTime: checkinTime ? addMinutes(checkinTime, duration) : undefined,
+    completedTime,
+    status,
+    pointTransaction:
+      completedTime && booking.checkoutPointsEarned !== undefined
+        ? {
+            id: `PTS-${booking.id}`,
+            createdAt: completedTime,
+            pointsEarned: booking.checkoutPointsEarned,
+            description: `Earned points for completed wash ${booking.id}`,
+          }
+        : undefined,
+  };
 }
 
 export function useOperationBookings() {
-  const bookings = React.useSyncExternalStore(
-    subscribeOperationBookings,
-    getOperationBookings,
-    getOperationBookings,
+  const { bookings, customers, staffMembers, washSessions } = useCarwashStore();
+
+  return React.useMemo(
+    () =>
+      bookings
+        .map((booking, index) =>
+          toOperationBooking(booking, index, customers, staffMembers, washSessions),
+        )
+        .filter((booking): booking is OperationBooking => Boolean(booking))
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()),
+    [bookings, customers, staffMembers, washSessions],
   );
-
-  React.useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (applyNoShowPolicy()) {
-        emit();
-      }
-    }, 60_000);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
-  return bookings;
 }
 
-function updateBooking(id: string, updater: (booking: OperationBooking) => OperationBooking) {
-  let updated: OperationBooking | null = null;
+export function useOperationActions() {
+  const { checkInOperationalBooking, completeOperationalWash, startOperationalWash } =
+    useCarwashStore();
 
-  operationBookings = operationBookings.map((booking) => {
-    if (booking.id !== id) return booking;
-    updated = updater(booking);
-    return updated;
-  });
-
-  if (!updated) {
-    throw new Error("Booking was not found.");
-  }
-
-  emit();
-  return updated;
+  return React.useMemo(
+    () => ({
+      checkInBooking: checkInOperationalBooking,
+      completeWashBooking: completeOperationalWash,
+      startWashBooking: startOperationalWash,
+    }),
+    [checkInOperationalBooking, completeOperationalWash, startOperationalWash],
+  );
 }
 
-export function checkInBooking(id: string) {
-  applyNoShowPolicy();
-  return updateBooking(id, (booking) => {
-    if (booking.status !== "CONFIRMED") {
-      throw new Error("Only confirmed bookings can be checked in.");
-    }
+export function useOperationStaffOptions(): StaffOption[] {
+  const { staffMembers } = useCarwashStore();
 
-    const checkinTime = new Date().toISOString();
-    return {
-      ...booking,
-      status: "CHECKED_IN",
-      checkinTime,
-      estimatedFinishTime: addMinutes(checkinTime, booking.packageDurationMinutes),
-    };
-  });
+  return React.useMemo(
+    () =>
+      staffMembers
+        .filter((staff) => staff.status === "Active")
+        .map((staff) => ({ id: staff.id, name: staff.name })),
+    [staffMembers],
+  );
 }
 
-export function startWashBooking(id: string) {
-  return updateBooking(id, (booking) => {
-    if (booking.status !== "CHECKED_IN") {
-      throw new Error("Only checked-in bookings can start washing.");
-    }
-
-    return { ...booking, status: "IN_PROGRESS" };
-  });
-}
-
-export function completeWashBooking(id: string) {
-  return updateBooking(id, (booking) => {
-    if (booking.status !== "IN_PROGRESS") {
-      throw new Error("Only in-progress bookings can be completed.");
-    }
-
-    const completedTime = new Date().toISOString();
-    const pointsEarned = Math.max(10, Math.round(booking.packageDurationMinutes * 0.4));
-
-    return {
-      ...booking,
-      status: "COMPLETED",
-      completedTime,
-      pointTransaction: {
-        id: `PT-${Date.now().toString().slice(-6)}`,
-        createdAt: completedTime,
-        pointsEarned,
-        description: `Earned points for completed wash ${booking.bookingCode}`,
-      },
-    };
-  });
-}
-
-export function findOperationBooking(id: string) {
-  return getOperationBookings().find((booking) => booking.id === id) ?? null;
+export function getOperationHourOptions(bookings: OperationBooking[]): OperationHourOption[] {
+  return Array.from(
+    new Map(
+      bookings.map((booking) => {
+        const date = new Date(booking.scheduledAt);
+        const value = String(date.getHours()).padStart(2, "0");
+        const label = new Intl.DateTimeFormat("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(date);
+        return [value, { value, label }];
+      }),
+    ).values(),
+  ).sort((a, b) => a.value.localeCompare(b.value));
 }
 
 export function formatOperationTime(value?: string) {
@@ -275,11 +232,16 @@ export function filterOperationBookings(bookings: OperationBooking[], filters: O
   return bookings.filter((booking) => {
     if (filters.status !== "ALL" && booking.status !== filters.status) return false;
     if (filters.staffId !== "ALL" && booking.assignedStaffId !== filters.staffId) return false;
+    if (filters.hour !== "ALL" && getHourValue(booking.scheduledAt) !== filters.hour) return false;
     if (filters.time !== "ALL" && getTimeBucket(booking.scheduledAt) !== filters.time) {
       return false;
     }
     return true;
   });
+}
+
+function getHourValue(value: string) {
+  return String(new Date(value).getHours()).padStart(2, "0");
 }
 
 function getTimeBucket(value: string): OperationsTimeFilter {

@@ -6,18 +6,25 @@ import { Button } from "@/components/ui/button";
 import { BookingStatusBadge } from "../components/BookingStatusBadge";
 import { OperationsFilters } from "../components/OperationsFilters";
 import { OperationsTable } from "../components/OperationsTable";
-import { filterOperationBookings, useOperationBookings } from "../mock/operations.mock";
+import {
+  filterOperationBookings,
+  getOperationHourOptions,
+  useOperationBookings,
+  useOperationStaffOptions,
+} from "../mock/operations.mock";
 import type { OperationFilters } from "../types/operations.types";
 import styles from "../styles/operations-board.module.css";
 
 const defaultFilters: OperationFilters = {
   status: "ALL",
   time: "ALL",
+  hour: "ALL",
   staffId: "ALL",
 };
 
 export function OperationsBoardPage() {
   const bookings = useOperationBookings();
+  const staffOptions = useOperationStaffOptions();
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState<OperationFilters>(defaultFilters);
 
@@ -36,6 +43,8 @@ export function OperationsBoardPage() {
     }),
     [bookings],
   );
+
+  const hourOptions = React.useMemo(() => getOperationHourOptions(bookings), [bookings]);
 
   const openBooking = (id: string) => {
     navigate({ to: "/staff/checkin/$id", params: { id } });
@@ -94,7 +103,12 @@ export function OperationsBoardPage() {
                   Reset
                 </Button>
               </div>
-              <OperationsFilters filters={filters} onChange={setFilters} />
+              <OperationsFilters
+                filters={filters}
+                hourOptions={hourOptions}
+                staffOptions={staffOptions}
+                onChange={setFilters}
+              />
             </div>
           </CardContent>
         </Card>

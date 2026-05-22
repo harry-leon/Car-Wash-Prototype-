@@ -332,6 +332,23 @@ interface Store {
     vehicleType: VehicleType;
     serviceIds: string[];
   }) => { id: string; staffName: string };
+  checkInOperationalBooking: (bookingId: string) => {
+    bookingId: string;
+    bookingCode: string;
+    staffName: string;
+    checkInAt: string;
+  };
+  startOperationalWash: (bookingId: string) => {
+    bookingId: string;
+    bookingCode: string;
+    staffName: string;
+  };
+  completeOperationalWash: (bookingId: string) => {
+    bookingId: string;
+    bookingCode: string;
+    pointsEarned: number;
+    completedAt: string;
+  };
   assignStaffToSession: (sessionId: string, staffId: string) => void;
   createOrUpdateSessionDraft: (draft: SessionDraft | null) => void;
   prepareSessionForBooking: (bookingId: string) => string;
@@ -524,6 +541,7 @@ const bookingSeed: Booking[] = [
     timeSlot: "09:00 AM",
     status: "Confirmed",
     createdAt: now.toISOString(),
+    notes: "Please keep the rear child seat dry.",
   },
   {
     id: "B002",
@@ -539,8 +557,87 @@ const bookingSeed: Booking[] = [
     timeSlot: "02:00 PM",
     status: "Pending",
     createdAt: now.toISOString(),
+    notes: "Customer will confirm the premium slot after lunch.",
+  },
+  {
+    id: "B003",
+    customerId: "c2",
+    vehicleId: "v3",
+    vehiclePlate: "60C-889.11",
+    vehicleName: "Ford Ranger",
+    vehicleType: "Truck",
+    services: ["Premium Detail"],
+    totalPrice: 280000,
+    scheduledAt: formatSchedule(localDateISO(plusDays(0)), "08:25 PM"),
+    dateISO: localDateISO(plusDays(0)),
+    timeSlot: "08:25 PM",
+    status: "Checked-in",
+    createdAt: now.toISOString(),
+    notes: "Customer asked staff to double-check the pickup bed cover.",
+    checkInAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+    washStatus: "Queued",
+  },
+  {
+    id: "B004",
+    customerId: "c3",
+    vehicleId: "v4",
+    vehiclePlate: "30A-998.77",
+    vehicleName: "Mercedes GLC",
+    vehicleType: "SUV",
+    services: ["Ceramic Coating"],
+    totalPrice: 450000,
+    scheduledAt: formatSchedule(localDateISO(plusDays(0)), "07:47 PM"),
+    dateISO: localDateISO(plusDays(0)),
+    timeSlot: "07:47 PM",
+    status: "Checked-in",
+    createdAt: now.toISOString(),
+    notes: "Avoid strong fragrance inside the cabin.",
+    checkInAt: new Date(Date.now() - 44 * 60 * 1000).toISOString(),
+    washStatus: "In Progress",
+  },
+  {
+    id: "B005",
+    customerId: "c1",
+    vehicleId: "v2",
+    vehiclePlate: "51K-678.90",
+    vehicleName: "Honda CR-V",
+    vehicleType: "SUV",
+    services: ["Premium Detail"],
+    totalPrice: 280000,
+    scheduledAt: formatSchedule(localDateISO(plusDays(0)), "06:37 PM"),
+    dateISO: localDateISO(plusDays(0)),
+    timeSlot: "06:37 PM",
+    status: "Completed",
+    createdAt: now.toISOString(),
+    notes: "Customer will pick up with a family member.",
+    checkInAt: new Date(Date.now() - 114 * 60 * 1000).toISOString(),
+    washStatus: "Completed",
+    completedAt: new Date(Date.now() - 82 * 60 * 1000).toISOString(),
+    checkoutPointsEarned: 42,
+  },
+  {
+    id: "B006",
+    customerId: "c2",
+    vehicleId: "v3",
+    vehiclePlate: "60C-889.11",
+    vehicleName: "Ford Ranger",
+    vehicleType: "Truck",
+    services: ["Basic Wash"],
+    totalPrice: 120000,
+    scheduledAt: formatSchedule(localDateISO(plusDays(1)), "10:27 PM"),
+    dateISO: localDateISO(plusDays(1)),
+    timeSlot: "10:27 PM",
+    status: "Cancelled",
+    createdAt: now.toISOString(),
+    notes: "Customer cancelled due to travel schedule change.",
   },
 ];
+
+function mergeSeedBookings(bookings: Booking[]) {
+  const existingIds = new Set(bookings.map((booking) => booking.id));
+  const missingSeedBookings = bookingSeed.filter((booking) => !existingIds.has(booking.id));
+  return [...bookings, ...missingSeedBookings];
+}
 
 const ledgerSeed: LedgerEntry[] = [
   {
@@ -954,7 +1051,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
 
     setRole(persisted.role);
     setIsAuthenticated(Boolean(persisted.isAuthenticated));
-    const restoredBookings = persisted.bookings ?? bookingSeed;
+    const restoredBookings = mergeSeedBookings(persisted.bookings ?? bookingSeed);
     setTiers(persisted.tiers ?? tierSeed);
     setPromotions(persisted.promotions ?? promotionSeed);
     setCurrentCustomerId(persisted.currentCustomerId ?? "c1");
@@ -1632,6 +1729,219 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     [bookings, customers, resolveFreeStaff, services],
   );
 
+  const checkInOperationalBooking = React.useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      const customer = customers.find((item) => item.id === booking?.customerId);
+      if (!booking || !customer) {
+        throw new Error("Invalid booking or customer details.");
+      }
+      if (!(booking.status === "Confirmed" || booking.status === "Pending")) {
+        throw new Error("Only open bookings can be checked in.");
+      }
+      if (!booking.isWalkIn) {
+        const lateMinutes = (Date.now() - parseBookingDate(booking).getTime()) / 60000;
+        if (lateMinutes > 20) {
+          setBookings((prev) =>
+            prev.map((item) => (item.id === bookingId ? { ...item, status: "No-show" } : item)),
+          );
+          throw new Error("Customer arrived more than 20 minutes late. Booking marked as No-show.");
+        }
+      }
+
+      const existingSession = washSessions.find((session) => session.bookingId === bookingId);
+      const existingStaff = staffMembers.find(
+        (staff) => staff.id === existingSession?.staffId && staff.status === "Active",
+      );
+      const staff = existingStaff ?? resolveFreeStaff();
+      const checkInAt = booking.checkInAt ?? new Date().toISOString();
+      const selectedServices = services.filter((service) =>
+        booking.services.includes(service.name),
+      );
+      const sessionId = existingSession?.id ?? crypto.randomUUID();
+
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === bookingId
+            ? { ...item, status: "Checked-in", checkInAt, washStatus: "Queued" }
+            : item,
+        ),
+      );
+      setWashSessions((prev) => [
+        {
+          id: sessionId,
+          bookingId,
+          customerId: customer.id,
+          customerName: customer.name,
+          staffId: staff.id,
+          staffName: staff.name,
+          vehicleType: booking.vehicleType,
+          plate: booking.vehiclePlate,
+          services: selectedServices,
+          subtotal: subtotalForServices(selectedServices),
+          status: "Queued",
+          startedAt: existingSession?.startedAt ?? checkInAt,
+          walkIn: booking.isWalkIn,
+        },
+        ...prev.filter((session) => session.bookingId !== bookingId),
+      ]);
+      setSelectedBookingId(bookingId);
+      setSessionDraft(null);
+      return {
+        bookingId,
+        bookingCode: booking.id,
+        staffName: staff.name,
+        checkInAt,
+      };
+    },
+    [bookings, customers, resolveFreeStaff, services, staffMembers, washSessions],
+  );
+
+  const startOperationalWash = React.useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      const customer = customers.find((item) => item.id === booking?.customerId);
+      if (!booking || !customer) {
+        throw new Error("Invalid booking or customer details.");
+      }
+      if (booking.status !== "Checked-in") {
+        throw new Error("Only checked-in bookings can start washing.");
+      }
+      const existingSession = washSessions.find((session) => session.bookingId === bookingId);
+      const existingStaff = staffMembers.find(
+        (staff) => staff.id === existingSession?.staffId && staff.status === "Active",
+      );
+      const staff = existingStaff ?? resolveFreeStaff();
+      const selectedServices = existingSession?.services.length
+        ? existingSession.services
+        : services.filter((service) => booking.services.includes(service.name));
+      const startedAt = existingSession?.startedAt ?? booking.checkInAt ?? new Date().toISOString();
+      const sessionId = existingSession?.id ?? crypto.randomUUID();
+
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === bookingId
+            ? {
+                ...item,
+                status: "Checked-in",
+                checkInAt: item.checkInAt ?? startedAt,
+                washStatus: "In Progress",
+              }
+            : item,
+        ),
+      );
+      setWashSessions((prev) => [
+        {
+          id: sessionId,
+          bookingId,
+          customerId: customer.id,
+          customerName: customer.name,
+          staffId: staff.id,
+          staffName: staff.name,
+          vehicleType: booking.vehicleType,
+          plate: booking.vehiclePlate,
+          services: selectedServices,
+          subtotal: subtotalForServices(selectedServices),
+          status: "In Progress",
+          startedAt,
+          walkIn: booking.isWalkIn,
+        },
+        ...prev.filter((session) => session.bookingId !== bookingId),
+      ]);
+      setSelectedBookingId(bookingId);
+      setSessionDraft(null);
+      return {
+        bookingId,
+        bookingCode: booking.id,
+        staffName: staff.name,
+      };
+    },
+    [bookings, customers, resolveFreeStaff, services, staffMembers, washSessions],
+  );
+
+  const completeOperationalWash = React.useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      if (!booking) {
+        throw new Error("Booking not found.");
+      }
+      if (booking.status !== "Checked-in" || booking.washStatus !== "In Progress") {
+        throw new Error("Only in-progress wash bookings can be completed.");
+      }
+
+      const session = washSessions.find((item) => item.bookingId === bookingId);
+      const customer = customers.find((item) => item.id === booking.customerId);
+      const selectedServices = session?.services.length
+        ? session.services
+        : services.filter((service) => booking.services.includes(service.name));
+      const subtotal = session?.subtotal ?? subtotalForServices(selectedServices);
+      const tierRule = customer ? tiers.find((tier) => tier.name === customer.tier) : undefined;
+      const pointsEarned = Math.floor(Math.floor(subtotal / 10000) * (tierRule?.multiplier ?? 1));
+      const completedAt = new Date().toISOString();
+
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === bookingId
+            ? {
+                ...item,
+                status: "Completed",
+                washStatus: "Completed",
+                completedAt,
+                checkoutPointsEarned: pointsEarned,
+              }
+            : item,
+        ),
+      );
+      setWashSessions((prev) =>
+        session
+          ? prev.map((item) =>
+              item.id === session.id
+                ? {
+                    ...item,
+                    status: "Completed",
+                    completedAt,
+                    subtotal,
+                    services: selectedServices,
+                  }
+                : item,
+            )
+          : prev,
+      );
+      if (customer) {
+        setCustomers((prev) =>
+          prev.map((item) =>
+            item.id === customer.id ? { ...item, points: item.points + pointsEarned } : item,
+          ),
+        );
+        setLedger((prev) => [
+          {
+            id: crypto.randomUUID(),
+            customerId: customer.id,
+            date: localDateISO(new Date()),
+            type: "Earned",
+            delta: pointsEarned,
+            description: `Completed wash ${booking.id}`,
+            expiresAt: addDays(localDateISO(new Date()), 365),
+          },
+          ...prev,
+        ]);
+      }
+      pushNotification({
+        type: "Loyalty",
+        title: "Wash Completed",
+        message: `${booking.id} completed and ${pointsEarned} points were credited.`,
+      });
+      setSessionDraft(null);
+      return {
+        bookingId,
+        bookingCode: booking.id,
+        pointsEarned,
+        completedAt,
+      };
+    },
+    [bookings, customers, pushNotification, services, tiers, washSessions],
+  );
+
   const createWalkInBooking = React.useCallback(
     ({
       plate,
@@ -1923,15 +2233,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setSessionDraft(null);
       return tx;
     },
-    [
-      customers,
-      promotions,
-      pushNotification,
-      resolveActiveStaff,
-      sessionDraft,
-      tiers,
-      washSessions,
-    ],
+    [customers, promotions, pushNotification, sessionDraft, staffMembers, tiers, washSessions],
   );
 
   const redeemReward = React.useCallback(
@@ -2203,6 +2505,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     updateBookingStatus,
     setSelectedBookingId,
     createWalkInBooking,
+    checkInOperationalBooking,
+    startOperationalWash,
+    completeOperationalWash,
     assignStaffToSession,
     createOrUpdateSessionDraft: (draft) => {
       if (!draft) {

@@ -1,6 +1,5 @@
-import type { OperationFilters } from "../types/operations.types";
+import type { OperationFilters, OperationHourOption, StaffOption } from "../types/operations.types";
 import { bookingStatusOptions } from "../mock/booking-status.mock";
-import { staffOptions } from "../mock/operations.mock";
 import {
   Select,
   SelectContent,
@@ -12,12 +11,19 @@ import {
 
 interface OperationsFiltersProps {
   filters: OperationFilters;
+  hourOptions: OperationHourOption[];
+  staffOptions: StaffOption[];
   onChange: (filters: OperationFilters) => void;
 }
 
-export function OperationsFilters({ filters, onChange }: OperationsFiltersProps) {
+export function OperationsFilters({
+  filters,
+  hourOptions,
+  staffOptions,
+  onChange,
+}: OperationsFiltersProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-4">
       <FilterField label="Status">
         <Select
           value={filters.status}
@@ -55,6 +61,24 @@ export function OperationsFilters({ filters, onChange }: OperationsFiltersProps)
               <SelectItem value="MORNING">Morning</SelectItem>
               <SelectItem value="AFTERNOON">Afternoon</SelectItem>
               <SelectItem value="EVENING">Evening</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </FilterField>
+
+      <FilterField label="Hour">
+        <Select value={filters.hour} onValueChange={(hour) => onChange({ ...filters, hour })}>
+          <SelectTrigger className="h-11 rounded-lg bg-background/70">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="ALL">All hours</SelectItem>
+              {hourOptions.map((hour) => (
+                <SelectItem key={hour.value} value={hour.value}>
+                  {hour.label}
+                </SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>
