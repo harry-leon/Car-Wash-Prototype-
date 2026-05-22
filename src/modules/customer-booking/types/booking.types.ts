@@ -1,49 +1,87 @@
-import type { MembershipTier } from './customer.types';
+import type { ServicePackage } from "./customer.types";
 
 export type BookingStatus =
-  | 'CONFIRMED'
-  | 'CHECKED_IN'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'CANCELLED'
-  | 'NO_SHOW';
+  | "CONFIRMED"
+  | "CHECKED_IN"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW";
 
-export interface Promotion {
-  id: string;
-  name: string;
-  discountType: 'PERCENT' | 'FIXED';
-  discountValue: number;
-  applicableTiers: MembershipTier[] | 'ALL' | 'NEW_CUSTOMER';
-  validUntil: string;
+export interface BookingVehicleSnapshot {
+  vehicleId: string;
+  licensePlate: string;
+  brand: string;
+  model: string;
+  vehicleType: string;
 }
 
-export interface BookingFormState {
-  vehicleId: string;
+export interface BookingPackageSnapshot {
   packageId: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  promotionId?: string;
-  useCombo: boolean;
-  redeemPoints: number;
+  name: string;
+  price: number;
+  durationMinutes: number;
+}
+
+export interface BookingAddonSnapshot {
+  addonId: string;
+  name: string;
+  price: number;
+  durationMinutes: number;
+}
+
+export interface BookingPaymentSnapshot {
+  originalPrice: number;
+  addOnTotal: number;
+  comboUpgradeAmount?: number;
+  comboUpgradeName?: string;
+  promoCode?: string;
+  promoDiscount: number;
+  pointsRedeemed: number;
+  pointDeductionValue: number;
+  paidViaCombo: boolean;
+  finalAmount: number;
 }
 
 export interface Booking {
   id: string;
-  customerId: string;
-  vehicleId: string;
-  vehiclePlate: string;
-  packageId: string;
-  packageName: string;
-  packagePrice: number;
-  scheduledAt: string;
+  bookingCode: string;
+  vehicle: BookingVehicleSnapshot;
+  package: BookingPackageSnapshot;
+  addOns: BookingAddonSnapshot[];
+  scheduledDate: string;
+  scheduledTime: string;
   status: BookingStatus;
-  promotionId?: string;
-  promotionName?: string;
-  promotionDiscount: number;
-  redeemPoints: number;
-  pointsDiscount: number;
-  usedComboId?: string;
-  usedComboName?: string;
-  finalAmount: number;
+  payment: BookingPaymentSnapshot;
   createdAt: string;
+}
+
+export interface BookingSelection {
+  vehicleId: string;
+  packageId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  promoCode: string;
+  addonIds: string[];
+  comboUpgradePackageId?: string;
+  comboUpgradeAmount?: number;
+  pointsToRedeem: number;
+  useActiveCombo: boolean;
+}
+
+export interface BookingSummary {
+  vehicleLabel: string;
+  package: ServicePackage;
+  scheduledDate: string;
+  scheduledTime: string;
+  originalPrice: number;
+  addOns: BookingAddonSnapshot[];
+  addOnTotal: number;
+  comboUpgradeAmount: number;
+  comboUpgradeName?: string;
+  promoDiscount: number;
+  pointsRedeemed: number;
+  pointDeductionValue: number;
+  paidViaCombo: boolean;
+  finalAmount: number;
 }

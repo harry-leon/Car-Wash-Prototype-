@@ -1,46 +1,64 @@
-import { useNavigate } from '@tanstack/react-router';
-import { VehicleForm } from '../components/VehicleForm';
-import { useCustomerBooking } from '../context/CustomerBookingContext';
-import type { Vehicle } from '../types/vehicle.types';
-import styles from '../styles/vehicles.module.css';
+import { Link, useNavigate } from "@tanstack/react-router";
+import { VehicleForm } from "../components/VehicleForm";
+import { useCustomerBooking } from "../routes";
+import type { VehicleFormValues } from "../types/vehicle.types";
+import styles from "../styles/vehicles.module.css";
 
 interface VehicleFormPageProps {
   vehicleId?: string;
+  onDone?: () => void;
 }
 
-export function VehicleFormPage({ vehicleId }: VehicleFormPageProps) {
+export function VehicleFormPage({ vehicleId, onDone }: VehicleFormPageProps) {
+  const { addVehicle, updateVehicle, vehicles } = useCustomerBooking();
   const navigate = useNavigate();
-  const { customer, vehicles, addVehicle, updateVehicle } = useCustomerBooking();
+  const vehicle = vehicleId ? vehicles.find((item) => item.id === vehicleId) : undefined;
+  const isEditing = Boolean(vehicleId);
 
-  const isEdit = !!vehicleId && vehicleId !== 'new';
-  const existing = isEdit ? vehicles.find((v) => v.id === vehicleId) : undefined;
-
-  const handleSubmit = (vehicle: Vehicle) => {
-    if (isEdit) {
-      updateVehicle(vehicle);
+  const handleSubmit = (values: VehicleFormValues) => {
+    if (vehicleId) {
+      updateVehicle(vehicleId, values);
     } else {
-      addVehicle(vehicle);
+      addVehicle(values);
     }
-    navigate({ to: '/customer/vehicles' });
+
+    if (onDone) {
+      onDone();
+      return;
+    }
+
+    navigate({ to: "/customer/cb/vehicles" });
   };
 
   const handleCancel = () => {
-    navigate({ to: '/customer/vehicles' });
+    if (onDone) {
+      onDone();
+      return;
+    }
+
+    navigate({ to: "/customer/cb/vehicles" });
   };
 
   return (
-    <div className={`p-4 md:p-8 lg:p-10 ${styles.page}`}>
-      <div className="mx-auto max-w-7xl">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">
-          {isEdit ? 'Edit Vehicle' : 'Add New Vehicle'}
-        </h1>
-        <VehicleForm
-          initial={existing}
-          ownerId={customer.id}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
-      </div>
-    </div>
+    <main className={styles.page}>
+      <header className={styles.pageHeader}>
+        <div>
+          <span>{isEditing ? "Edit vehicle" : "New vehicle"}</span>
+          <h1>{isEditing ? "Update vehicle details" : "Add a vehicle"}</h1>
+          <p>
+            Brand and model selection automatically locks the vehicle type for consistent booking
+            data.
+          </p>
+        </div>
+      </header>
+      {isEditing && !vehicle ? (
+        <section className={styles.emptyState}>
+          <h2>Vehicle not found</h2>
+          <Link to="/customer/cb/vehicles">Back to vehicles</Link>
+        </section>
+      ) : (
+        <VehicleForm vehicle={vehicle} onSubmit={handleSubmit} onCancel={handleCancel} />
+      )}
+    </main>
   );
 }

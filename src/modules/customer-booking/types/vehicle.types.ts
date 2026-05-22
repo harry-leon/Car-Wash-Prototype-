@@ -1,19 +1,31 @@
-export type VehicleType = 'SEDAN' | 'SUV' | 'HATCHBACK' | 'PICKUP' | 'VAN' | 'MOTORCYCLE';
+export type VehicleType = "Sedan" | "SUV" | "Hatchback" | "Pickup" | "Van";
+
+export type VehicleBrand = "Toyota" | "Honda" | "Ford" | "Hyundai" | "Mercedes-Benz";
+
+export interface VehicleModelOption {
+  model: string;
+  vehicleType: VehicleType;
+}
+
+export type BrandModelCatalog = Record<VehicleBrand, VehicleModelOption[]>;
 
 export interface Vehicle {
   id: string;
   licensePlate: string;
-  brand: string;
+  brand: VehicleBrand;
   model: string;
   vehicleType: VehicleType;
-  color?: string;
+  color: string;
+  imageUrl?: string;
   isDefault: boolean;
-  ownerId: string;
 }
 
-export interface BrandModelMap {
-  [brand: string]: Array<{
-    model: string;
-    vehicleType: VehicleType;
-  }>;
+export interface VehicleFormValues {
+  licensePlate: string;
+  brand: VehicleBrand;
+  model: string;
+  vehicleType: VehicleType;
+  color: string;
+  imageUrl?: string;
+  isDefault: boolean;
 }

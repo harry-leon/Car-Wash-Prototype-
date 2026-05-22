@@ -1,144 +1,163 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import type { Vehicle, VehicleType } from '../types/vehicle.types';
-import { brandModelMap } from '../mock/vehicles.mock';
-import styles from '../styles/vehicles.module.css';
+import { useMemo, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { brandModelCatalog } from "../mock/vehicles.mock";
+import type { Vehicle, VehicleBrand, VehicleFormValues } from "../types/vehicle.types";
+import { BrandSelect } from "./BrandSelect";
+import { ModelSelect } from "./ModelSelect";
+import styles from "../styles/vehicles.module.css";
 
 interface VehicleFormProps {
-  initial?: Vehicle;
-  ownerId: string;
-  onSubmit: (vehicle: Vehicle) => void;
+  vehicle?: Vehicle;
+  onSubmit: (values: VehicleFormValues) => void;
   onCancel: () => void;
 }
 
-export function VehicleForm({ initial, ownerId, onSubmit, onCancel }: VehicleFormProps) {
-  const [brand, setBrand] = useState(initial?.brand ?? '');
-  const [model, setModel] = useState(initial?.model ?? '');
-  const [vehicleType, setVehicleType] = useState<VehicleType | ''>(initial?.vehicleType ?? '');
-  const [plate, setPlate] = useState(initial?.licensePlate ?? '');
-  const [color, setColor] = useState(initial?.color ?? '');
-  const [isDefault, setIsDefault] = useState(initial?.isDefault ?? false);
+export function VehicleForm({ vehicle, onSubmit, onCancel }: VehicleFormProps) {
+  const initialBrand = vehicle?.brand ?? "Toyota";
+  const firstModel = brandModelCatalog[initialBrand][0];
+  const [licensePlate, setLicensePlate] = useState(vehicle?.licensePlate ?? "");
+  const [brand, setBrand] = useState<VehicleBrand>(initialBrand);
+  const [model, setModel] = useState(vehicle?.model ?? firstModel.model);
+  const [color, setColor] = useState(vehicle?.color ?? "");
+  const [imageUrl, setImageUrl] = useState(vehicle?.imageUrl ?? "");
+  const [isDefault, setIsDefault] = useState(vehicle?.isDefault ?? false);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const brands = useMemo(() => Object.keys(brandModelMap), []);
-  const models = useMemo(
-    () => (brand ? brandModelMap[brand] ?? [] : []),
-    [brand],
-  );
+  const selectedVehicleType = useMemo(() => {
+    return (
+      brandModelCatalog[brand].find((option) => option.model === model)?.vehicleType ??
+      brandModelCatalog[brand][0].vehicleType
+    );
+  }, [brand, model]);
 
-  useEffect(() => {
-    if (brand && model) {
-      const found = models.find((m) => m.model === model);
-      setVehicleType(found?.vehicleType ?? '');
+  const handleBrandChange = (nextBrand: VehicleBrand) => {
+    const nextModel = brandModelCatalog[nextBrand][0];
+    setBrand(nextBrand);
+    setModel(nextModel.model);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!licensePlate.trim()) {
+      setError("License plate is required.");
+      return;
     }
-  }, [brand, model, models]);
 
-  const handleBrandChange = (value: string) => {
-    setBrand(value);
-    setModel('');
-    setVehicleType('');
-  };
-
-  const handleModelChange = (value: string) => {
-    setModel(value);
-    const found = models.find((m) => m.model === value);
-    setVehicleType(found?.vehicleType ?? '');
-  };
-
-  const isValid = brand && model && vehicleType && plate.trim().length > 0;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isValid || (vehicleType as string) === '') return;
-
-    const vehicle: Vehicle = {
-      id: initial?.id ?? `v-${Date.now()}`,
-      licensePlate: plate.toUpperCase().trim(),
+    onSubmit({
+      licensePlate,
       brand,
       model,
-      vehicleType,
-      color: color.trim() || undefined,
+      vehicleType: selectedVehicleType,
+      color,
+      imageUrl: imageUrl.trim() || undefined,
       isDefault,
-      ownerId,
-    };
+    });
+  };
 
-    onSubmit(vehicle);
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setImageUrl(reader.result);
+        setError("");
+      }
+    };
+    reader.onerror = () => setError("Could not read the selected image.");
+    reader.readAsDataURL(file);
+  };
+
+  const clearVehicleImage = () => {
+    setImageUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.formContainer}>
+    <form className={styles.vehicleForm} onSubmit={handleSubmit}>
+      <label className={styles.field}>
+        <span>License plate</span>
+        <input
+          value={licensePlate}
+          onChange={(event) => {
+            setLicensePlate(event.target.value);
+            setError("");
+          }}
+          required
+        />
+      </label>
       <div className={styles.formGrid}>
-        <div className={styles.formField}>
-          <label htmlFor="vf-brand">Brand</label>
-          <select id="vf-brand" value={brand} onChange={(e) => handleBrandChange(e.target.value)} required>
-            <option value="">Select brand…</option>
-            {brands.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+        <BrandSelect value={brand} onChange={handleBrandChange} />
+        <ModelSelect brand={brand} value={model} onChange={setModel} />
+      </div>
+      <div className={styles.formGrid}>
+        <label className={styles.field}>
+          <span>Vehicle type</span>
+          <input value={selectedVehicleType} readOnly aria-readonly="true" />
+        </label>
+        <label className={styles.field}>
+          <span>Color</span>
+          <input value={color} onChange={(event) => setColor(event.target.value)} />
+        </label>
+      </div>
+      <section className={styles.imageUploadField}>
+        <div>
+          <span>Vehicle photo</span>
+          <p>
+            Upload a photo from your computer. It will be used on the vehicle card and default
+            vehicle panel.
+          </p>
         </div>
-
-        <div className={styles.formField}>
-          <label htmlFor="vf-model">Model</label>
-          <select
-            id="vf-model"
-            value={model}
-            onChange={(e) => handleModelChange(e.target.value)}
-            disabled={!brand}
-            required
-          >
-            <option value="">Select model…</option>
-            {models.map((m) => (
-              <option key={m.model} value={m.model}>{m.model}</option>
-            ))}
-          </select>
+        <div className={styles.imageUploadControl}>
+          <div className={styles.imagePreview}>
+            {imageUrl ? (
+              <img src={imageUrl} alt="Vehicle preview" />
+            ) : (
+              <span>No image selected</span>
+            )}
+          </div>
+          <div className={styles.imageActions}>
+            <label>
+              Upload photo
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} />
+            </label>
+            {imageUrl ? (
+              <button type="button" onClick={clearVehicleImage}>
+                Remove
+              </button>
+            ) : null}
+          </div>
         </div>
-
-        <div className={styles.formField}>
-          <label htmlFor="vf-type">Vehicle Type</label>
-          <input id="vf-type" type="text" value={vehicleType} readOnly placeholder="Auto-filled" />
-        </div>
-
-        <div className={styles.formField}>
-          <label htmlFor="vf-plate">License Plate</label>
-          <input
-            id="vf-plate"
-            type="text"
-            value={plate}
-            onChange={(e) => setPlate(e.target.value)}
-            placeholder="e.g. 51A-123.45"
-            required
-          />
-        </div>
-
-        <div className={styles.formField}>
-          <label htmlFor="vf-color">Color (optional)</label>
-          <input
-            id="vf-color"
-            type="text"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            placeholder="e.g. Black"
-          />
-        </div>
-
-        <div className={styles.checkboxRow}>
-          <input
-            id="vf-default"
-            type="checkbox"
-            checked={isDefault}
-            onChange={(e) => setIsDefault(e.target.checked)}
-          />
-          <label htmlFor="vf-default">Set as default vehicle</label>
-        </div>
-
-        <div className="flex gap-3 pt-2">
-          <Button type="submit" disabled={!isValid}>
-            {initial ? 'Save Changes' : 'Add Vehicle'}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
+      </section>
+      <label className={styles.checkboxField}>
+        <input
+          type="checkbox"
+          checked={isDefault}
+          onChange={(event) => setIsDefault(event.target.checked)}
+        />
+        Set as default vehicle
+      </label>
+      {error ? <p className={styles.formError}>{error}</p> : null}
+      <div className={styles.formActions}>
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className={styles.primaryButton}>
+          Save vehicle
+        </button>
       </div>
     </form>
   );

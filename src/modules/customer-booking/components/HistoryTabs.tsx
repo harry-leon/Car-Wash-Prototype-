@@ -1,38 +1,42 @@
-import { useLocation, Link } from '@tanstack/react-router';
-import styles from '../styles/history.module.css';
+import { Link } from "@tanstack/react-router";
+import styles from "../styles/history.module.css";
 
-const TABS = [
-  { label: 'Bookings', path: '/customer/transactions' },
-  { label: 'Wash History', path: '/customer/transactions' },
-  { label: 'Points', path: '/customer/transactions' },
-] as const;
+type HistoryTab = "bookings" | "washes" | "points";
 
 interface HistoryTabsProps {
-  activeTab: 'bookings' | 'washes' | 'points';
-  onTabChange: (tab: 'bookings' | 'washes' | 'points') => void;
+  activeTab: HistoryTab;
+  onTabChange?: (tab: HistoryTab) => void;
 }
 
-const TAB_KEYS: Array<'bookings' | 'washes' | 'points'> = ['bookings', 'washes', 'points'];
-const TAB_LABELS: Record<string, string> = {
-  bookings: 'Bookings',
-  washes: 'Wash History',
-  points: 'Points',
-};
+const tabs: Array<{ key: HistoryTab; label: string; href: string }> = [
+  { key: "bookings", label: "Booking History", href: "/customer/cb/history" },
+  { key: "washes", label: "Wash History", href: "/customer/cb/history" },
+  { key: "points", label: "Point Transactions", href: "/customer/cb/history" },
+];
 
 export function HistoryTabs({ activeTab, onTabChange }: HistoryTabsProps) {
   return (
-    <div className={styles.tabsContainer}>
-      <div className={styles.tabsList}>
-        {TAB_KEYS.map((key) => (
+    <nav className={styles.historyTabs} aria-label="History sections">
+      {tabs.map((tab) =>
+        onTabChange ? (
           <button
-            key={key}
-            className={`${styles.tabItem} ${activeTab === key ? styles.tabItemActive : ''}`}
-            onClick={() => onTabChange(key)}
+            key={tab.key}
+            type="button"
+            className={activeTab === tab.key ? styles.tabActive : styles.tab}
+            onClick={() => onTabChange(tab.key)}
           >
-            {TAB_LABELS[key]}
+            {tab.label}
           </button>
-        ))}
-      </div>
-    </div>
+        ) : (
+          <Link
+            key={tab.key}
+            to={tab.href}
+            className={activeTab === tab.key ? styles.tabActive : styles.tab}
+          >
+            {tab.label}
+          </Link>
+        ),
+      )}
+    </nav>
   );
 }

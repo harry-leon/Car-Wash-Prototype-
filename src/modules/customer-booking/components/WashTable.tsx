@@ -1,50 +1,43 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import type { WashRecord } from '../types/history.types';
+import type { WashHistoryRecord } from "../types/history.types";
+import styles from "../styles/history.module.css";
 
 interface WashTableProps {
-  records: WashRecord[];
+  washes: WashHistoryRecord[];
 }
 
-export function WashTable({ records }: WashTableProps) {
+export function WashTable({ washes }: WashTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Vehicle</TableHead>
-          <TableHead>Package</TableHead>
-          <TableHead>Used Combo</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {records.map((r) => (
-          <TableRow key={r.bookingId}>
-            <TableCell className="text-xs text-muted-foreground">
-              {new Date(r.completedAt).toLocaleDateString('en-GB')}{' '}
-              {new Date(r.completedAt).toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </TableCell>
-            <TableCell className="font-mono text-xs">{r.vehiclePlate}</TableCell>
-            <TableCell>{r.packageName}</TableCell>
-            <TableCell>
-              {r.usedCombo ? (
-                <span className="text-sm font-semibold text-amber-600">{r.comboName}</span>
-              ) : (
-                <span className="text-xs text-muted-foreground">—</span>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className={styles.tableWrap}>
+      <table className={styles.historyTable}>
+        <thead>
+          <tr>
+            <th>Wash</th>
+            <th>Vehicle</th>
+            <th>Package</th>
+            <th>Completed On</th>
+            <th>Payment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {washes.map((wash) => (
+            <tr key={wash.id}>
+              <td>{wash.bookingCode}</td>
+              <td>{wash.vehicle.licensePlate}</td>
+              <td>{wash.package.name}</td>
+              <td>
+                {wash.scheduledDate} {wash.scheduledTime}
+              </td>
+              <td>
+                {wash.payment.paidViaCombo ? (
+                  <span className={styles.comboBadge}>Paid via Combo</span>
+                ) : (
+                  `${wash.payment.finalAmount.toLocaleString()} VND`
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

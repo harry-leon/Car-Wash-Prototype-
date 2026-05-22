@@ -1,20 +1,16 @@
-export type TransactionType = 'EARN' | 'REDEEM' | 'REFUND' | 'BONUS' | 'ADJUSTMENT';
+import type { Booking } from "./booking.types";
+
+export type PointTransactionType = "EARN" | "REDEEM" | "REFUND" | "BONUS" | "ADJUSTMENT";
 
 export interface PointTransaction {
   id: string;
-  customerId: string;
-  type: TransactionType;
+  type: PointTransactionType;
   points: number;
   description: string;
-  bookingId?: string;
+  bookingCode?: string;
   createdAt: string;
 }
 
-export interface WashRecord {
-  bookingId: string;
-  vehiclePlate: string;
-  packageName: string;
-  completedAt: string;
-  usedCombo: boolean;
-  comboName?: string;
-}
+export type WashHistoryRecord = Booking & {
+  status: "COMPLETED";
+};

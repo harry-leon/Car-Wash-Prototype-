@@ -1,115 +1,210 @@
 .page {
-  position: relative;
-  padding: 1.5rem;
+  --cb-primary: var(--primary, #0066ff);
+  --cb-emerald: #00c853;
+  --cb-text: var(--foreground, #101828);
+  --cb-muted: var(--muted-foreground, #667085);
+  --cb-border: rgba(16, 24, 40, 0.08);
+  --cb-surface: var(--card, #ffffff);
+  --cb-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 18px 48px -30px rgba(0, 102, 255, 0.38);
+
+  display: grid;
+  gap: 20px;
+  width: min(1160px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 54px;
+  color: var(--cb-text);
 }
 
-.tabsContainer {
-  margin-bottom: 1.5rem;
-}
-
-.tabsList {
+.pageHeader {
   display: flex;
-  gap: 0.25rem;
-  border-radius: 0.75rem;
-  background: hsl(var(--muted) / 0.5);
-  padding: 0.25rem;
-  width: fit-content;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.tabItem {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  color: hsl(var(--muted-foreground));
+.pageHeader span {
+  color: var(--cb-primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pageHeader h1,
+.pageHeader p {
+  margin: 0;
+}
+
+.pageHeader h1 {
+  margin-top: 4px;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+
+.pageHeader p {
+  max-width: 740px;
+  margin-top: 8px;
+  color: var(--cb-muted);
+}
+
+.historyTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid var(--cb-border);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.05), rgba(0, 200, 83, 0.05));
+  box-shadow: var(--cb-shadow);
+}
+
+.tab,
+.tabActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
   background: transparent;
-  border: none;
-  transition: all 0.2s ease;
+  color: #43525f;
+  font: inherit;
+  font-weight: 900;
   text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tabItem:hover {
-  color: hsl(var(--foreground));
-  background: hsl(var(--muted) / 0.5);
+.tab:hover,
+.tab:focus-visible,
+.tabActive {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--cb-primary), #0047b3);
+  outline: 0;
+  transform: translateY(-1px);
 }
 
-.tabItemActive {
-  color: hsl(var(--foreground));
-  background: hsl(var(--background));
-  box-shadow: 0 1px 3px hsl(var(--ring) / 0.1);
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--cb-border);
+  border-radius: 16px;
+  background: var(--cb-surface);
+  box-shadow: var(--cb-shadow);
 }
 
-/* ── Status Badge Colors ── */
+.historyTable {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.historyTable th,
+.historyTable td {
+  padding: 15px 16px;
+  border-bottom: 1px solid rgba(16, 24, 40, 0.07);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.historyTable th {
+  color: #526472;
+  background: rgba(0, 102, 255, 0.04);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.historyTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.historyTable tr {
+  transition: background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.historyTable tbody tr:hover {
+  background: rgba(0, 102, 255, 0.035);
+}
+
+.statusBadge,
+.comboBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #e8f6f3;
+  color: #0f766e;
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+
 .statusCONFIRMED {
-  background: hsl(210 100% 95%);
-  color: hsl(210 100% 40%);
-  border-color: hsl(210 100% 80%);
+  color: #056035;
+  background: rgba(0, 200, 83, 0.13);
 }
 
 .statusCHECKED_IN {
-  background: hsl(185 70% 92%);
-  color: hsl(185 70% 32%);
-  border-color: hsl(185 70% 75%);
+  color: #064e7a;
+  background: rgba(14, 165, 233, 0.15);
 }
 
 .statusIN_PROGRESS {
-  background: hsl(30 100% 92%);
-  color: hsl(30 100% 35%);
-  border-color: hsl(30 100% 75%);
+  color: #713f12;
+  background: rgba(245, 158, 11, 0.18);
 }
 
 .statusCOMPLETED {
-  background: hsl(142 71% 92%);
-  color: hsl(142 71% 30%);
-  border-color: hsl(142 71% 75%);
+  color: #075985;
+  background: rgba(59, 130, 246, 0.15);
 }
 
 .statusCANCELLED {
-  background: hsl(0 84% 94%);
-  color: hsl(0 84% 40%);
-  border-color: hsl(0 84% 80%);
+  color: #9f1239;
+  background: rgba(244, 63, 94, 0.14);
 }
 
 .statusNO_SHOW {
-  background: hsl(0 0% 92%);
-  color: hsl(0 0% 45%);
-  border-color: hsl(0 0% 78%);
+  color: #3f3f46;
+  background: rgba(113, 113, 122, 0.16);
 }
 
-/* ── Transaction Type Badges ── */
-.typeEARN {
-  background: hsl(142 71% 92%);
-  color: hsl(142 71% 30%);
+.comboBadge {
+  color: #2b1800;
+  background: linear-gradient(135deg, #fff4b8, #d4af37);
 }
 
-.typeREDEEM {
-  background: hsl(0 84% 94%);
-  color: hsl(0 84% 40%);
+.transactionEARN,
+.transactionBONUS,
+.transactionREFUND {
+  color: #056035;
+  background: rgba(0, 200, 83, 0.13);
 }
 
-.typeREFUND {
-  background: hsl(210 100% 95%);
-  color: hsl(210 100% 40%);
+.transactionREDEEM {
+  color: #9f1239;
+  background: rgba(244, 63, 94, 0.14);
 }
 
-.typeBONUS {
-  background: hsl(43 96% 92%);
-  color: hsl(43 80% 30%);
+.transactionADJUSTMENT {
+  color: #064e7a;
+  background: rgba(14, 165, 233, 0.15);
 }
 
-.typeADJUSTMENT {
-  background: hsl(260 40% 93%);
-  color: hsl(260 40% 40%);
-}
-
-/* ── Points Coloring ── */
 .pointsPositive {
-  color: hsl(142 71% 35%);
-  font-weight: 700;
+  color: #087443;
+  font-weight: 950;
 }
 
 .pointsNegative {
-  color: hsl(0 84% 45%);
-  font-weight: 700;
+  color: #b42318;
+  font-weight: 950;
+}
+
+@media (max-width: 680px) {
+  .pageHeader {
+    flex-direction: column;
+  }
+
+  .historyTabs {
+    display: grid;
+  }
 }

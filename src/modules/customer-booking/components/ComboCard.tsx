@@ -1,29 +1,52 @@
-import type { ComboPackage } from '../types/customer.types';
-import styles from '../styles/customer-home.module.css';
+import type { ComboPackage } from "../types/customer.types";
+import styles from "../styles/customer-home.module.css";
 
 interface ComboCardProps {
-  combo: ComboPackage;
+  comboPackage: ComboPackage;
+  actionLabel?: string;
+  isActive?: boolean;
+  onSelect?: (comboPackageId: string) => void;
 }
 
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+export function ComboCard({
+  actionLabel,
+  comboPackage,
+  isActive = false,
+  onSelect,
+}: ComboCardProps) {
+  const content = (
+    <>
+      <div className={styles.comboCardTopline}>
+        <span>
+          {comboPackage.totalUses} washes / {comboPackage.validityDays} days
+        </span>
+        {isActive ? <em>Current combo</em> : null}
+      </div>
+      <h3>{comboPackage.name}</h3>
+      <p>{comboPackage.description}</p>
+      <div className={styles.comboPrice}>
+        <strong>{comboPackage.price.toLocaleString()} VND</strong>
+        <small>{comboPackage.savingsText}</small>
+      </div>
+      {actionLabel ? <b>{actionLabel}</b> : null}
+    </>
+  );
 
-export function ComboCard({ combo }: ComboCardProps) {
+  if (onSelect) {
+    return (
+      <button
+        className={`${styles.comboCard} ${isActive ? styles.comboCardActive : ""}`}
+        type="button"
+        onClick={() => onSelect(comboPackage.id)}
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
-    <div className={styles.packageCard}>
-      <h4 className="text-base font-bold">{combo.name}</h4>
-      <div className="mt-1 text-xs text-muted-foreground">
-        {combo.totalUses} uses &middot; Valid {combo.validDays} days
-      </div>
-      <div className={styles.packagePrice}>{formatVND(combo.price)}</div>
-      <div className={styles.packageDuration}>
-        {formatVND(Math.round(combo.price / combo.totalUses))} / use
-      </div>
-    </div>
+    <article className={`${styles.comboCard} ${isActive ? styles.comboCardActive : ""}`}>
+      {content}
+    </article>
   );
 }

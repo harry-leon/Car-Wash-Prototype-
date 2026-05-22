@@ -1,19 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookingTable } from '../components/BookingTable';
-import { useCustomerBooking } from '../context/CustomerBookingContext';
-import styles from '../styles/history.module.css';
+import { BookingTable } from "../components/BookingTable";
+import { HistoryTabs } from "../components/HistoryTabs";
+import { useCustomerBooking } from "../routes";
+import styles from "../styles/history.module.css";
 
 export function BookingHistoryPage() {
   const { bookings } = useCustomerBooking();
 
   return (
-    <Card className="overflow-hidden border-border/50 bg-card/60 shadow-xl backdrop-blur-xl">
-      <CardHeader className="border-b border-border/50 bg-accent/20 py-4">
-        <CardTitle className="text-base font-semibold">All Bookings</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <BookingTable bookings={bookings} />
-      </CardContent>
-    </Card>
+    <main className={styles.page}>
+      <header className={styles.pageHeader}>
+        <div>
+          <span>History</span>
+          <h1>Booking History</h1>
+          <p>
+            All bookings across confirmed, checked-in, in-progress, completed, cancelled, and
+            no-show lifecycles.
+          </p>
+        </div>
+      </header>
+      <HistoryTabs activeTab="bookings" />
+      <BookingTable bookings={bookings} />
+    </main>
   );
 }
